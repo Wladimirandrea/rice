@@ -1,0 +1,57 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "error": "Error",
+    "success": "Success",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Welcome back",
+      "email": "Email address",
+      "email_placeholder": "youremail.com",
+      "password": "Password",
+      "password_placeholder": "••••••••",
+      "submit": "Sign in",
+      "submitting": "Verifying...",
+      "invalid_credentials": "Invalid email or password.",
+      "account_disabled": "Your account has been disabled.",
+      "generic_error": "An error occurred. Please try again."
+    },
+    "forgot": {
+      "title": "Forgot your password?",
+      "subtitle": "We'll send you a recovery link",
+      "email": "Email address",
+      "submit": "Send reset link",
+      "submitting": "Sending...",
+      "success": "Check your email, we sent you the link.",
+      "back_to_login": "Back to login",
+      "generic_error": "An error occurred. Please try again."
+    },
+    "reset": {
+      "title": "New password",
+      "subtitle": "Enter your new password",
+      "password": "New password",
+      "password_confirm": "Confirm password",
+      "submit": "Change password",
+      "submitting": "Saving...",
+      "success": "Password updated. You can now sign in.",
+      "invalid_token": "The link is invalid or has expired.",
+      "generic_error": "An error occurred. Please try again."
+    }
+  },
+  "roles": {
+    "admin": "Administrator",
+    "case_manager": "Case Manager",
+    "client": "Client"
+  },
+  "dashboard": {
+    "welcome": "Welcome, {name}",
+    "admin_title": "Admin Dashboard",
+    "case_manager_title": "Manager Dashboard",
+    "client_title": "My Appointments"
+  }
+}

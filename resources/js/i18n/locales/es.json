@@ -1,0 +1,57 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "error": "Error",
+    "success": "Éxito",
+    "logout": "Cerrar sesión"
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar Sesión",
+      "subtitle": "Bienvenido de vuelta",
+      "email": "Correo electrónico",
+      "email_placeholder": "tucorreo.com",
+      "password": "Contraseña",
+      "password_placeholder": "••••••••",
+      "submit": "Entrar",
+      "submitting": "Verificando...",
+      "invalid_credentials": "Correo o contraseña incorrectos.",
+      "account_disabled": "Tu cuenta está desactivada.",
+      "generic_error": "Ocurrió un error. Intenta de nuevo."
+    },
+    "forgot": {
+      "title": "¿Olvidaste tu contraseña?",
+      "subtitle": "Te enviaremos un enlace de recuperación",
+      "email": "Correo electrónico",
+      "submit": "Enviar enlace",
+      "submitting": "Enviando...",
+      "success": "Revisa tu correo, te enviamos el enlace.",
+      "back_to_login": "Volver al inicio de sesión",
+      "generic_error": "Ocurrió un error. Intenta de nuevo."
+    },
+    "reset": {
+      "title": "Nueva contraseña",
+      "subtitle": "Ingresa tu nueva contraseña",
+      "password": "Nueva contraseña",
+      "password_confirm": "Confirmar contraseña",
+      "submit": "Cambiar contraseña",
+      "submitting": "Guardando...",
+      "success": "Contraseña actualizada. Ya puedes iniciar sesión.",
+      "invalid_token": "El enlace es inválido o ha expirado.",
+      "generic_error": "Ocurrió un error. Intenta de nuevo."
+    }
+  },
+  "roles": {
+    "admin": "Administrador",
+    "case_manager": "Gestor de Casos",
+    "client": "Cliente"
+  },
+  "dashboard": {
+    "welcome": "Bienvenido, {name}",
+    "admin_title": "Panel de Administración",
+    "case_manager_title": "Panel del Gestor",
+    "client_title": "Mis Citas"
+  }
+}
