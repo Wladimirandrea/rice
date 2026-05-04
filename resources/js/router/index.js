@@ -1,21 +1,20 @@
 // resources/js/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
+import AppLayout from '@/layouts/AppLayout.vue'
 
-const LoginView = () => import('@/views/auth/LoginView.vue')
+const LoginView          = () => import('@/views/auth/LoginView.vue')
 const ForgotPasswordView = () => import('@/views/auth/ForgotPasswordView.vue')
 const ResetPasswordView  = () => import('@/views/auth/ResetPasswordView.vue')
-const AdminDashboard = () => import('@/views/admin/DashboardView.vue')
-const ManagerDashboard = () => import('@/views/manager/DashboardView.vue')
-const ClientDashboard = () => import('@/views/client/DashboardView.vue')
-const AdminLayout = () => import('@/layouts/AdminLayout.vue')
-const ManagerLayout = () => import('@/layouts/ManagerLayout.vue')
-const ClientLayout = () => import('@/layouts/ClientLayout.vue')
+const AdminDashboard     = () => import('@/views/admin/DashboardView.vue')
+const ManagerDashboard   = () => import('@/views/manager/DashboardView.vue')
+const ClientDashboard    = () => import('@/views/client/DashboardView.vue')
 
 const routes = [
     {
         path: '/',
         name: 'login',
         component: LoginView,
+        meta: { guest: true },
     },
     {
         path: '/forgot-password',
@@ -31,24 +30,31 @@ const routes = [
     },
     {
         path: '/admin',
-        component: AdminLayout,
+        component: AppLayout,
+        meta: { requiresAuth: true, roles: ['admin'] },
         children: [
             { path: 'dashboard', name: 'admin.dashboard', component: AdminDashboard },
         ],
     },
     {
         path: '/manager',
-        component: ManagerLayout,
+        component: AppLayout,
+        meta: { requiresAuth: true, roles: ['case_manager'] },
         children: [
             { path: 'dashboard', name: 'manager.dashboard', component: ManagerDashboard },
         ],
     },
     {
         path: '/client',
-        component: ClientLayout,
+        component: AppLayout,
+        meta: { requiresAuth: true, roles: ['client'] },
         children: [
             { path: 'dashboard', name: 'client.dashboard', component: ClientDashboard },
         ],
+    },
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/',
     },
 ]
 
@@ -57,7 +63,25 @@ const router = createRouter({
     routes,
 })
 
-// Guard desactivado temporalmente
-// router.beforeEach(...)
+router.beforeEach((to) => {
+    const token = localStorage.getItem('token')
+    const user  = JSON.parse(localStorage.getItem('user') || 'null')
+    const role  = user?.role || null
+
+    if (to.meta.guest && token) return getRoleRoute(role)
+    if (to.meta.requiresAuth && !token) return { name: 'login' }
+    if (to.meta.roles && token && !to.meta.roles.includes(role)) return getRoleRoute(role)
+
+    return true
+})
+
+function getRoleRoute(role) {
+    const map = {
+        admin:        { name: 'admin.dashboard' },
+        case_manager: { name: 'manager.dashboard' },
+        client:       { name: 'client.dashboard' },
+    }
+    return map[role] || { name: 'login' }
+}
 
 export default router
