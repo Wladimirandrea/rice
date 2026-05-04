@@ -3,10 +3,12 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useLocale } from '@/i18n'
 import api from '@/plugins/axios'
 
-const { t }  = useI18n()
-const router = useRouter()
+const { t }                  = useI18n()
+const router                 = useRouter()
+const { locale, setLocale }  = useLocale()
 
 const email       = ref('')
 const errors      = ref({})
@@ -33,6 +35,10 @@ async function handleSubmit() {
     } finally {
         isLoading.value = false
     }
+}
+
+function toggleLocale() {
+    setLocale(locale.value === 'es' ? 'en' : 'es')
 }
 </script>
 

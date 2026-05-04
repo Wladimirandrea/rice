@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
     }
-    config.headers['Accept-Language'] = i18n.global.locale.value
+    config.headers['Accept-Language'] = i18n.global.locale.value  
     return config
 })
 

@@ -96,10 +96,35 @@ class User extends Authenticatable
 
     public function sendPasswordResetNotification($token): void
     {
-        $frontendUrl = config('app.frontend_url', 'http://192.168.12.125:5173');
+        $frontendUrl = config('app.frontend_url', 'http://192.168.12.125:8000');
 
         ResetPasswordNotification::createUrlUsing(function ($user, $token) use ($frontendUrl) {
             return $frontendUrl . '/reset-password?token=' . $token . '&email=' . urlencode($user->email);
+        });
+
+        // Personalizar el contenido del correo
+        ResetPasswordNotification::toMailUsing(function ($notifiable, $token) use ($frontendUrl) {
+            $url = $frontendUrl . '/reset-password?token=' . $token . '&email=' . urlencode($notifiable->email);
+
+            $isEnglish = app()->getLocale() === 'en';
+
+            if ($isEnglish) {
+                return (new \Illuminate\Notifications\Messages\MailMessage)
+                    ->subject('Reset your password')
+                    ->greeting('Hello!')
+                    ->line('You are receiving this email because we received a password reset request for your account.')
+                    ->action('Reset Password', $url)
+                    ->line('This link will expire in 60 minutes.')
+                    ->line('If you did not request a password reset, no further action is required.');
+            }
+
+            return (new \Illuminate\Notifications\Messages\MailMessage)
+                ->subject('Recupera tu contraseña')
+                ->greeting('¡Hola!')
+                ->line('Recibiste este correo porque solicitaste restablecer la contraseña de tu cuenta.')
+                ->action('Restablecer Contraseña', $url)
+                ->line('Este enlace expirará en 60 minutos.')
+                ->line('Si no solicitaste este cambio, ignora este correo.');
         });
 
         $this->notify(new ResetPasswordNotification($token));

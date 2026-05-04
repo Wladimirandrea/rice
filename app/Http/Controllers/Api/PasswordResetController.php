@@ -20,18 +20,27 @@ class PasswordResetController extends Controller
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
+        // ── Detectar idioma ANTES de enviar el correo ──
+        $locale    = $request->header('Accept-Language', 'es');
+        $isEnglish = str_starts_with($locale, 'en');
+        app()->setLocale($isEnglish ? 'en' : 'es');
+
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
         if ($status === Password::RESET_LINK_SENT) {
             return response()->json([
-                'message' => 'Te enviamos un enlace de recuperación a tu correo.',
+                'message' => $isEnglish
+                    ? 'We sent a recovery link to your email.'
+                    : 'Te enviamos un enlace de recuperación a tu correo.',
             ], 200);
         }
 
         return response()->json([
-            'message' => 'No pudimos enviar el correo. Intenta de nuevo.',
+            'message' => $isEnglish
+                ? 'Could not send the email. Please try again.'
+                : 'No pudimos enviar el correo. Intenta de nuevo.',
         ], 500);
     }
 
@@ -40,6 +49,9 @@ class PasswordResetController extends Controller
      */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
+        $locale = $request->header('Accept-Language', 'es');
+        $isEnglish = str_starts_with($locale, 'en');
+
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
@@ -48,21 +60,23 @@ class PasswordResetController extends Controller
                     'remember_token' => Str::random(60),
                 ])->save();
 
-                // Revocar todos los tokens activos por seguridad
                 $user->tokens()->delete();
-
                 event(new PasswordReset($user));
             }
         );
 
         if ($status === Password::PASSWORD_RESET) {
             return response()->json([
-                'message' => 'Contraseña actualizada correctamente. Ya puedes iniciar sesión.',
+                'message' => $isEnglish
+                    ? 'Password updated successfully. You can now sign in.'
+                    : 'Contraseña actualizada correctamente. Ya puedes iniciar sesión.',
             ], 200);
         }
 
         return response()->json([
-            'message' => 'El enlace de recuperación es inválido o ha expirado.',
+            'message' => $isEnglish
+                ? 'The reset link is invalid or has expired.'
+                : 'El enlace de recuperación es inválido o ha expirado.',
         ], 422);
     }
 }
