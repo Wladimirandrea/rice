@@ -8,6 +8,7 @@ const ResetPasswordView  = () => import('@/views/auth/ResetPasswordView.vue')
 const AdminDashboard     = () => import('@/views/admin/DashboardView.vue')
 const ManagerDashboard   = () => import('@/views/manager/DashboardView.vue')
 const ClientDashboard    = () => import('@/views/client/DashboardView.vue')
+const UsersView = () => import('@/views/admin/UsersView.vue')
 
 const routes = [
     {
@@ -34,6 +35,7 @@ const routes = [
         meta: { requiresAuth: true, roles: ['admin'] },
         children: [
             { path: 'dashboard', name: 'admin.dashboard', component: AdminDashboard },
+            { path: 'users', name: 'admin.users', component: UsersView },
         ],
     },
     {

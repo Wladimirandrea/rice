@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
+const { t }  = useI18n()
 const router = useRouter()
 const auth   = useAuthStore()
 
@@ -10,39 +12,43 @@ const activeIndex    = ref(0)
 const menuRef        = ref(null)
 const menuBorderLeft = ref('0px')
 
-const adminItems = [
-    { label: 'Home',     icon: 'fa-house',         route: 'admin.dashboard', color: '#4a90e2' },
-    { label: 'Users',    icon: 'fa-users',          route: 'admin.users',     color: '#2dd4bf' },
-    { label: 'Profile',  icon: 'fa-user-tie',       route: 'admin.dashboard', color: '#a78bfa' },
-    { label: 'Calendar', icon: 'fa-calendar-days',  route: 'admin.calendar',  color: '#fb923c' },
-    { label: 'Reports',  icon: 'fa-chart-bar',      route: 'admin.reports',   color: '#f472b6' },
-]
-const managerItems = [
-    { label: 'Home',     icon: 'fa-house',          route: 'manager.dashboard', color: '#4a90e2' },
-    { label: 'Clients',  icon: 'fa-users',          route: 'manager.clients',   color: '#2dd4bf' },
-    { label: 'Profile',  icon: 'fa-user-tie',       route: 'manager.dashboard', color: '#a78bfa' },
-    { label: 'Calendar', icon: 'fa-calendar-days',  route: 'manager.calendar',  color: '#fb923c' },
-]
-const clientItems = [
-    { label: 'Home',     icon: 'fa-house',          route: 'client.dashboard',    color: '#4a90e2' },
-    { label: 'Schedule', icon: 'fa-calendar-check', route: 'client.appointments', color: '#2dd4bf' },
-    { label: 'Profile',  icon: 'fa-user-tie',       route: 'client.dashboard',    color: '#a78bfa' },
-]
+const adminItems = computed(() => [
+    { label: t('nav.home'),     icon: 'fa-house',         route: 'admin.dashboard', color: '#4a90e2' },
+    { label: t('nav.users'),    icon: 'fa-users',         route: 'admin.users',     color: '#2dd4bf' },
+    { label: t('nav.profile'),  icon: 'fa-user-tie',      route: 'admin.dashboard', color: '#a78bfa' },
+    { label: t('nav.calendar'), icon: 'fa-calendar-days', route: 'admin.calendar',  color: '#fb923c' },
+    { label: t('nav.reports'),  icon: 'fa-chart-bar',     route: 'admin.reports',   color: '#f472b6' },
+])
 
-const items = auth.isAdmin ? adminItems : auth.isCaseManager ? managerItems : clientItems
+const managerItems = computed(() => [
+    { label: t('nav.home'),     icon: 'fa-house',         route: 'manager.dashboard', color: '#4a90e2' },
+    { label: t('nav.clients'),  icon: 'fa-users',         route: 'manager.clients',   color: '#2dd4bf' },
+    { label: t('nav.profile'),  icon: 'fa-user-tie',      route: 'manager.dashboard', color: '#a78bfa' },
+    { label: t('nav.calendar'), icon: 'fa-calendar-days', route: 'manager.calendar',  color: '#fb923c' },
+])
+
+const clientItems = computed(() => [
+    { label: t('nav.home'),     icon: 'fa-house',          route: 'client.dashboard',    color: '#4a90e2' },
+    { label: t('nav.schedule'), icon: 'fa-calendar-check', route: 'client.appointments', color: '#2dd4bf' },
+    { label: t('nav.profile'),  icon: 'fa-user-tie',       route: 'client.dashboard',    color: '#a78bfa' },
+])
+
+const items = computed(() =>
+    auth.isAdmin ? adminItems.value : auth.isCaseManager ? managerItems.value : clientItems.value
+)
 
 function updateBorder(index) {
     nextTick(() => {
         if (!menuRef.value) return
         const menuItems = menuRef.value.querySelectorAll('.menu_item')
         if (!menuItems[index]) return
-        const item      = menuItems[index]
-        const menu      = menuRef.value
-        const itemRect  = item.getBoundingClientRect()
-        const menuRect  = menu.getBoundingClientRect()
-        const fontSize  = parseFloat(getComputedStyle(menu).fontSize)
+        const item        = menuItems[index]
+        const menu        = menuRef.value
+        const itemRect    = item.getBoundingClientRect()
+        const menuRect    = menu.getBoundingClientRect()
+        const fontSize    = parseFloat(getComputedStyle(menu).fontSize)
         const borderWidth = 10.9 * fontSize
-        const left = itemRect.left - menuRect.left + itemRect.width / 2 - borderWidth / 2
+        const left        = itemRect.left - menuRect.left + itemRect.width / 2 - borderWidth / 2
         menuBorderLeft.value = `${left}px`
     })
 }
@@ -50,7 +56,7 @@ function updateBorder(index) {
 function clickItem(index) {
     activeIndex.value = index
     updateBorder(index)
-    router.push({ name: items[index].route })
+    router.push({ name: items.value[index].route })
 }
 
 function onResize() {

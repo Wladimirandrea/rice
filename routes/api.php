@@ -1,6 +1,7 @@
 <?php
 // routes/api.php
 
+use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
@@ -23,7 +24,8 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 
 // ── Ejemplo de rutas protegidas por rol ────────────────────
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    // Route::apiResource('/users', AdminUserController::class);
+    Route::apiResource('/users', AdminUserController::class);
+    Route::get('/users-case-managers', [AdminUserController::class, 'caseManagers']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,case_manager'])->prefix('manager')->group(function () {

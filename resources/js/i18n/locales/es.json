@@ -53,5 +53,52 @@
     "admin_title": "Panel de Administración",
     "case_manager_title": "Panel del Gestor",
     "client_title": "Mis Citas"
+  },
+  "users": {
+    "title": "Gestión de Usuarios",
+    "create": "Crear Nuevo Usuario",
+    "edit": "Editar Usuario",
+    "delete": "Eliminar Usuario",
+    "confirm_delete": "¿Estás seguro de eliminar a {name}? Esta acción no se puede deshacer.",
+    "no_users": "No se encontraron usuarios",
+    "delete_confirm": "Eliminar",
+    "deleting": "Eliminando...",
+    "form": {
+      "full_name": "Nombre Completo",
+      "email": "Correo Electrónico",
+      "role": "Rol",
+      "password": "Contraseña",
+      "new_password": "Nueva Contraseña (dejar en blanco para mantener)",
+      "confirm_password": "Confirmar Contraseña",
+      "upload_photo": "Subir foto",
+      "cancel": "Cancelar",
+      "create_user": "Crear Usuario",
+      "update_user": "Actualizar Usuario",
+      "saving": "Guardando...",
+      "error": "Ocurrió un error. Intenta de nuevo."
+    },
+    "roles": {
+      "all": "Todos",
+      "admin": "Administrador",
+      "case_manager": "Gestor de Casos",
+      "client": "Cliente"
+    },
+    "crumbs": {
+      "dashboard": "Panel",
+      "users": "Usuarios"
+    }
+  },
+  "nav": {
+    "home":     "Inicio",
+    "dashboard": "Panel",
+    "users": "Usuarios",
+    "reports": "Reportes",
+    "calendar": "Calendario",
+    "clients": "Clientes",
+    "appointments": "Citas",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "profile":  "Perfil",
+    "schedule": "Agenda"
   }
 }

@@ -1,11 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppNavbar from '@/components/layout/AppNavbar.vue'
 import AppBottomNav from '@/components/layout/AppBottomNav.vue'
 
+const auth = useAuthStore()
 const collapsed = ref(false)
 const navHidden = ref(false)
+
+const roleClass = computed(() => {
+    if (auth.isAdmin) return 'theme-admin'
+    if (auth.isCaseManager) return 'theme-manager'
+    if (auth.isClient) return 'theme-client'
+    return ''
+})
 
 function handleToggle() {
     if (window.innerWidth < 768) {
@@ -17,7 +26,7 @@ function handleToggle() {
 </script>
 
 <template>
-    <div class="layout" :class="{ collapsed, 'nav-hidden': navHidden }">
+    <div class="layout" :class="[{ collapsed, 'nav-hidden': navHidden }, roleClass]">
         <AppNavbar @toggle="handleToggle" />
         <AppSidebar :collapsed="collapsed" />
         <main class="main-content">
@@ -30,7 +39,6 @@ function handleToggle() {
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── MOBILE ── */
 .layout {
     display: grid;
     height: 100dvh;
@@ -52,6 +60,103 @@ function handleToggle() {
         #00152b 0%, #054894 35%, #10448b 70%, #00152b 100%);
 }
 
+/* ── Tema Admin (default azul) ── */
+.theme-admin .navbar,
+.theme-admin .sidebar,
+.theme-admin .bottom-nav {
+    background: rgb(19, 28, 46);
+}
+
+/* ── Tema Case Manager (verde) ── */
+.theme-manager .navbar,
+.theme-manager .sidebar,
+.theme-manager .bottom-nav {
+    background: rgb(2, 41, 36);
+}
+
+.theme-manager .sidebar {
+    border-right-color: rgba(255,255,255,0.08);
+}
+
+.theme-manager .navbar {
+    border-bottom-color: rgba(255,255,255,0.08);
+}
+
+.theme-manager .bottom-nav {
+    border-top-color: rgba(255,255,255,0.08);
+}
+
+.theme-manager .sidebar-item.active {
+    background: rgba(2, 100, 80, 0.6);
+}
+
+.theme-manager .sidebar-item:hover {
+    background: rgba(2, 100, 80, 0.3);
+}
+
+.theme-manager .sidebar-profile {
+    background: rgba(2, 100, 80, 0.3);
+}
+
+.theme-manager .nav-icon-btn:hover,
+.theme-manager .nav-profile:hover,
+.theme-manager .lang-btn {
+    background: rgba(2, 100, 80, 0.4);
+}
+
+.theme-manager .menu {
+    background-color: rgb(2, 41, 36);
+}
+
+.theme-manager .menu_border {
+    background-color: rgb(2, 41, 36);
+}
+
+/* ── Tema Cliente ── */
+.theme-client .navbar,
+.theme-client .sidebar,
+.theme-client .bottom-nav {
+    background: rgb(7, 36, 95);
+}
+
+.theme-client .sidebar {
+    border-right-color: rgba(255,255,255,0.08);
+}
+
+.theme-client .navbar {
+    border-bottom-color: rgba(255,255,255,0.08);
+}
+
+.theme-client .bottom-nav {
+    border-top-color: rgba(255,255,255,0.08);
+}
+
+.theme-client .sidebar-item.active {
+    background: rgba(7, 60, 160, 0.6);
+}
+
+.theme-client .sidebar-item:hover {
+    background: rgba(7, 60, 160, 0.3);
+}
+
+.theme-client .sidebar-profile {
+    background: rgba(7, 60, 160, 0.3);
+}
+
+.theme-client .nav-icon-btn:hover,
+.theme-client .nav-profile:hover,
+.theme-client .lang-btn {
+    background: rgba(7, 60, 160, 0.4);
+}
+
+.theme-client .menu {
+    background-color: rgb(7, 36, 95);
+}
+
+.theme-client .menu_border {
+    background-color: rgb(7, 36, 95);
+}
+
 .layout.nav-hidden {
     grid-template-rows: 60px 1fr 0px;
 }
@@ -63,7 +168,6 @@ function handleToggle() {
     overflow: hidden;
 }
 
-/* ── DESKTOP ── */
 @media (min-width: 768px) {
     .layout {
         grid-template-columns: 260px 1fr !important;

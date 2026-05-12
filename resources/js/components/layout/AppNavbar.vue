@@ -30,7 +30,7 @@ const initials = computed(() => {
         <div class="nav-right">
             <div class="lang-selector">
                 <button class="lang-btn" @click="langOpen = !langOpen">
-                    <span class="lang-flag">{{ locale === 'es' ? '🇲🇽' : '🇺🇸' }}</span>
+                    <span class="lang-flag">{{ locale === 'en' ?  '🇺🇸' : '🇲🇽' }}</span>
                     <span class="lang-code">{{ locale.toUpperCase() }}</span>
                     <i class="fa fa-chevron-down lang-arrow" :class="{ rotated: langOpen }"></i>
                 </button>
@@ -59,7 +59,7 @@ const initials = computed(() => {
 </template>
 
 <style scoped>
-.navbar { grid-area: navbar; background: rgb(19, 28, 46); border-bottom: 1px solid #1e2a3a; display: flex; align-items: center; gap: 12px; padding: 0 8px; z-index: 100; }
+.navbar { grid-area: navbar; background: rgb(2 41 36); border-bottom: 1px solid #1e2a3a; display: flex; align-items: center; gap: 12px; padding: 0 8px; z-index: 100; }
 .toggle-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 0 1rem; height: 100%; display: flex; align-items: center; }
 .toggle-btn:hover { background: rgba(255,255,255,0.08); }
 .nav-right { display: flex; align-items: center; gap: 2px; margin-left: auto; }

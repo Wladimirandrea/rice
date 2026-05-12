@@ -1,32 +1,35 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 
 const auth   = useAuthStore()
 const router = useRouter()
 const route  = useRoute()
+const { t }  = useI18n()
+
 const logoUrl = '/images/raise-logo.png'
 
 const menuItems = computed(() => {
     if (auth.isAdmin) {
         return [
-            { label: 'Dashboard', icon: 'fa-house',     route: 'admin.dashboard' },
-            { label: 'Users',     icon: 'fa-users',     route: 'admin.users' },
-            { label: 'Reports',   icon: 'fa-chart-bar', route: 'admin.reports' },
-            { label: 'Calendar',  icon: 'fa-calendar',  route: 'admin.calendar' },
+            { label: t('nav.dashboard'),  icon: 'fa-house',     route: 'admin.dashboard' },
+            { label: t('nav.users'),      icon: 'fa-users',     route: 'admin.users' },
+            { label: t('nav.reports'),    icon: 'fa-chart-bar', route: 'admin.reports' },
+            { label: t('nav.calendar'),   icon: 'fa-calendar',  route: 'admin.calendar' },
         ]
     }
     if (auth.isCaseManager) {
         return [
-            { label: 'Dashboard', icon: 'fa-house',    route: 'manager.dashboard' },
-            { label: 'Clients',   icon: 'fa-users',    route: 'manager.clients' },
-            { label: 'Calendar',  icon: 'fa-calendar', route: 'manager.calendar' },
+            { label: t('nav.dashboard'), icon: 'fa-house',    route: 'manager.dashboard' },
+            { label: t('nav.clients'),   icon: 'fa-users',    route: 'manager.clients' },
+            { label: t('nav.calendar'),  icon: 'fa-calendar', route: 'manager.calendar' },
         ]
     }
     return [
-        { label: 'Dashboard',    icon: 'fa-house',          route: 'client.dashboard' },
-        { label: 'Appointments', icon: 'fa-calendar-check', route: 'client.appointments' },
+        { label: t('nav.dashboard'),    icon: 'fa-house',          route: 'client.dashboard' },
+        { label: t('nav.appointments'), icon: 'fa-calendar-check', route: 'client.appointments' },
     ]
 })
 
@@ -70,17 +73,19 @@ async function handleLogout() {
         </nav>
         <div class="sidebar-divider"></div>
         <div class="sidebar-footer">
-            <a class="sidebar-item" href="#" data-tooltip="Settings">
+            <a class="sidebar-item" href="#" :data-tooltip="t('nav.settings')">
                 <i class="fa fa-gear"></i>
-                <span class="sidebar-text">Settings</span>
+                <span class="sidebar-text">{{ t('nav.settings') }}</span>
             </a>
-            <button class="sidebar-item sidebar-logout" data-tooltip="Logout" @click="handleLogout">
+            <button class="sidebar-item sidebar-logout" :data-tooltip="t('nav.logout')" @click="handleLogout">
                 <i class="fa fa-right-from-bracket"></i>
-                <span class="sidebar-text">Logout</span>
+                <span class="sidebar-text">{{ t('nav.logout') }}</span>
             </button>
         </div>
     </aside>
 </template>
+
+<!-- styles sin cambios -->
 
 <style scoped>
 .sidebar { display: none; flex-direction: column; height: 100%; overflow: hidden; background: rgb(19, 28, 46); border-right: 1px solid #1e2a3a; transition: width 0.3s ease; }
