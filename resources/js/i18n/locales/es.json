@@ -90,17 +90,18 @@
     }
   },
   "nav": {
-    "home": "Inicio",
-    "dashboard": "Panel",
-    "users": "Usuarios",
-    "reports": "Reportes",
-    "calendar": "Calendario",
-    "clients": "Clientes",
+    "home":         "Inicio",
+    "dashboard":    "Panel",
+    "users":        "Usuarios",
+    "caseManagers": "Gestores",
+    "reports":      "Reportes",
+    "calendar":     "Calendario",
+    "clients":      "Clientes",
     "appointments": "Citas",
-    "settings": "Configuración",
-    "logout": "Cerrar sesión",
-    "profile": "Perfil",
-    "schedule": "Agenda"
+    "settings":     "Configuración",
+    "logout":       "Cerrar sesión",
+    "profile":      "Perfil",
+    "schedule":     "Agenda"
   },
   "caseManagers": {
     "title": "Case Managers",

@@ -90,18 +90,18 @@
     }
   },
   "nav": {
-    "home": "Home",
-    "dashboard": "Dashboard",
-    "users": "Users",
-    "caseManagers": "Case Managers",
-    "reports": "Reports",
-    "calendar": "Calendar",
-    "clients": "Clients",
+    "home":         "Home",
+    "dashboard":    "Dashboard",
+    "users":        "Users",
+    "caseManagers": "Managers",
+    "reports":      "Reports",
+    "calendar":     "Calendar",
+    "clients":      "Clients",
     "appointments": "Appointments",
-    "settings": "Settings",
-    "logout": "Logout",
-    "profile": "Profile",
-    "schedule": "Schedule"
+    "settings":     "Settings",
+    "logout":       "Logout",
+    "profile":      "Profile",
+    "schedule":     "Schedule"
   },
   "caseManagers": {
     "title": "Case Managers",
