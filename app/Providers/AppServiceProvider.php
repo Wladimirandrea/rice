@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Illuminate\Support\ServiceProvider;
+use App\Policies\CaseManagerPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,4 +23,11 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
+
+    
+
+    protected $policies = [
+        // ... policies existentes ...
+        User::class => CaseManagerPolicy::class,
+    ];
 }

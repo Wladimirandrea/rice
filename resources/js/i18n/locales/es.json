@@ -44,6 +44,7 @@
     }
   },
   "roles": {
+    "all": "Todos",
     "admin": "Administrador",
     "case_manager": "Gestor de Casos",
     "client": "Cliente"
@@ -89,7 +90,7 @@
     }
   },
   "nav": {
-    "home":     "Inicio",
+    "home": "Inicio",
     "dashboard": "Panel",
     "users": "Usuarios",
     "reports": "Reportes",
@@ -98,7 +99,27 @@
     "appointments": "Citas",
     "settings": "Configuración",
     "logout": "Cerrar sesión",
-    "profile":  "Perfil",
+    "profile": "Perfil",
     "schedule": "Agenda"
+  },
+  "caseManagers": {
+    "title": "Case Managers",
+    "subtitle": "Administra tu equipo de case managers",
+    "searchPlaceholder": "Buscar por nombre o email...",
+    "role": "Cargo",
+    "roleLabel": "Case Manager",
+    "viewClients": "Ver Clientes",
+    "clientsOf": "Clientes de",
+    "noClients": "Sin clientes asignados aún",
+    "totalClients": "{count} cliente(s) asignado(s)",
+    "empty": "No se encontraron case managers",
+    "client": "Cliente",
+    "clients": "Clientes",
+    "assignedClients": "Clientes Asignados",
+    "unassigned": "Sin Asignar",
+    "noUnassigned": "Sin clientes sin asignar",
+    "reassign": "Reasignar a otro Case Manager",
+    "release": "Liberar cliente",
+    "noManagers": "No hay case managers disponibles"
   }
 }

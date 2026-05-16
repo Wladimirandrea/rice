@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -82,16 +83,25 @@ class User extends Authenticatable
     }
 
     /** Clientes asignados a este Case Manager */
-    public function clients(): HasMany
+    public function clients(): BelongsToMany
     {
-        return $this->hasMany(User::class, 'created_by')
-            ->where('role', 'client');
+        return $this->belongsToMany(
+            User::class,
+            'user_assignments',
+            'case_manager_id',
+            'client_id'
+        )->withTimestamps();
     }
 
-    /** Case Manager asignado a este cliente */
-    public function caseManager(): BelongsTo
+    /** Case Managers asignados a este cliente */
+    public function caseManagers(): BelongsToMany
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsToMany(
+            User::class,
+            'user_assignments',
+            'client_id',
+            'case_manager_id'
+        )->withTimestamps();
     }
 
     public function sendPasswordResetNotification($token): void

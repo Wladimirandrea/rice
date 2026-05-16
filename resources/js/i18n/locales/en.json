@@ -79,7 +79,7 @@
       "error": "An error occurred. Please try again."
     },
     "roles": {
-      "all":          "All",
+      "all": "All",
       "admin": "Admin",
       "case_manager": "Case Manager",
       "client": "Client"
@@ -90,16 +90,37 @@
     }
   },
   "nav": {
-    "home":     "Home",
+    "home": "Home",
     "dashboard": "Dashboard",
     "users": "Users",
+    "caseManagers": "Case Managers",
     "reports": "Reports",
     "calendar": "Calendar",
     "clients": "Clients",
     "appointments": "Appointments",
     "settings": "Settings",
     "logout": "Logout",
-    "profile":  "Profile",
+    "profile": "Profile",
     "schedule": "Schedule"
+  },
+  "caseManagers": {
+    "title": "Case Managers",
+    "subtitle": "Manage your case manager team",
+    "searchPlaceholder": "Search by name or email...",
+    "role": "Job",
+    "roleLabel": "Case Manager",
+    "viewClients": "View Clients",
+    "clientsOf": "Clients of",
+    "noClients": "No clients assigned yet",
+    "totalClients": "{count} client(s) assigned",
+    "empty": "No case managers found",
+    "client": "Client",
+    "clients": "Clients",
+    "assignedClients": "Assigned Clients",
+    "unassigned": "Unassigned",
+    "noUnassigned": "No unassigned clients",
+    "reassign": "Reassign to another Case Manager",
+    "release": "Release client",
+    "noManagers": "No case managers available"
   }
 }

@@ -2,12 +2,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 
-const LoginView          = () => import('@/views/auth/LoginView.vue')
+const LoginView = () => import('@/views/auth/LoginView.vue')
 const ForgotPasswordView = () => import('@/views/auth/ForgotPasswordView.vue')
-const ResetPasswordView  = () => import('@/views/auth/ResetPasswordView.vue')
-const AdminDashboard     = () => import('@/views/admin/DashboardView.vue')
-const ManagerDashboard   = () => import('@/views/manager/DashboardView.vue')
-const ClientDashboard    = () => import('@/views/client/DashboardView.vue')
+const ResetPasswordView = () => import('@/views/auth/ResetPasswordView.vue')
+const AdminDashboard = () => import('@/views/admin/DashboardView.vue')
+const ManagerDashboard = () => import('@/views/manager/DashboardView.vue')
+const ClientDashboard = () => import('@/views/client/DashboardView.vue')
 const UsersView = () => import('@/views/admin/UsersView.vue')
 
 const routes = [
@@ -36,6 +36,7 @@ const routes = [
         children: [
             { path: 'dashboard', name: 'admin.dashboard', component: AdminDashboard },
             { path: 'users', name: 'admin.users', component: UsersView },
+            { path: 'case-managers', name: 'admin.case-managers', component: () => import('@/views/admin/CaseManagersView.vue') },
         ],
     },
     {
@@ -67,8 +68,8 @@ const router = createRouter({
 
 router.beforeEach((to) => {
     const token = localStorage.getItem('token')
-    const user  = JSON.parse(localStorage.getItem('user') || 'null')
-    const role  = user?.role || null
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    const role = user?.role || null
 
     if (to.meta.guest && token) return getRoleRoute(role)
     if (to.meta.requiresAuth && !token) return { name: 'login' }
@@ -79,9 +80,9 @@ router.beforeEach((to) => {
 
 function getRoleRoute(role) {
     const map = {
-        admin:        { name: 'admin.dashboard' },
+        admin: { name: 'admin.dashboard' },
         case_manager: { name: 'manager.dashboard' },
-        client:       { name: 'client.dashboard' },
+        client: { name: 'client.dashboard' },
     }
     return map[role] || { name: 'login' }
 }

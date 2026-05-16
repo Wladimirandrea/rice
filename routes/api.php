@@ -2,6 +2,7 @@
 // routes/api.php
 
 use App\Http\Controllers\Api\Admin\AdminUserController;
+use App\Http\Controllers\Api\Admin\CaseManagerController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,16 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
     Route::apiResource('/users', AdminUserController::class);
     Route::get('/users-case-managers', [AdminUserController::class, 'caseManagers']);
+
+    // ── Case Managers — estáticas primero ──
+    Route::get('/case-managers/all', [CaseManagerController::class, 'allManagers']);
+    Route::get('/case-managers/unassigned-clients', [CaseManagerController::class, 'unassignedClients']);
+    Route::post('/case-managers/reassign', [CaseManagerController::class, 'reassign']); // ← subir aquí
+    Route::get('/case-managers', [CaseManagerController::class, 'index']);
+
+    // ── Con parámetros — al final ──
+    Route::get('/case-managers/{user}/clients', [CaseManagerController::class, 'clients']);
+    Route::delete('/case-managers/release/{client}', [CaseManagerController::class, 'release']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,case_manager'])->prefix('manager')->group(function () {
