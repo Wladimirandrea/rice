@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;    
+use Illuminate\Http\Request;
 
 class CaseManagerController extends Controller
 {
@@ -165,5 +165,18 @@ class CaseManagerController extends Controller
             ]);
 
         return response()->json(['managers' => $managers]);
+    }
+
+    public function clientManager(User $client): JsonResponse
+    {
+        abort_if(!auth()->user()->isAdmin(), 403);
+
+        $assignment = DB::table('user_assignments')
+            ->where('client_id', $client->id)
+            ->first();
+
+        return response()->json([
+            'case_manager_id' => $assignment?->case_manager_id ?? null,
+        ]);
     }
 }

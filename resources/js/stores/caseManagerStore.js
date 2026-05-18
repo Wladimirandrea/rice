@@ -8,6 +8,7 @@ export const useCaseManagerStore = defineStore('caseManager', () => {
   const meta = ref({})
   const loading = ref(false)
   const error = ref(null)
+  const currentManagerId = ref(null)
 
   // Modal principal
   const modalOpen = ref(false)
@@ -77,12 +78,16 @@ export const useCaseManagerStore = defineStore('caseManager', () => {
     showReassignList.value = false
     clientModalOpen.value = true
 
-    // Cargar lista de managers para reasignar
     try {
       const { data } = await api.get('/admin/case-managers/all')
       allManagers.value = data.managers
+
+      // ← buscar el manager actual del cliente
+      const assignedRes = await api.get(`/admin/case-managers/client/${client.id}/manager`)
+      currentManagerId.value = assignedRes.data.case_manager_id ?? null
     } catch {
       allManagers.value = []
+      currentManagerId.value = null
     }
   }
 
@@ -102,27 +107,16 @@ export const useCaseManagerStore = defineStore('caseManager', () => {
         case_manager_id: newManagerId,
       })
 
-      // Actualizar listas en tiempo real
-      const newManager = allManagers.value.find(m => m.id === newManagerId)
+      const { data } = await api.get('/admin/case-managers')
+      managers.value = data.data
+      meta.value = data.meta
 
-      // Quitar de asignados del manager actual
-      modalClients.value = modalClients.value.filter(
-        c => c.id !== selectedClient.value.id
-      )
-      // Quitar de sin asignar si estaba ahí
-      modalUnassigned.value = modalUnassigned.value.filter(
-        c => c.id !== selectedClient.value.id
-      )
-
-      // Actualizar contador en la tarjeta del manager actual
-      const managerInList = managers.value.find(m => m.id === modalManager.value?.id)
-      if (managerInList) managerInList.clients_count = modalClients.value.length
-
-      // Si el nuevo manager es el mismo que estamos viendo, agregar a su lista
+      modalClients.value = modalClients.value.filter(c => c.id !== selectedClient.value.id)
+      modalUnassigned.value = modalUnassigned.value.filter(c => c.id !== selectedClient.value.id)
       if (newManagerId === modalManager.value?.id) {
         modalClients.value.push(selectedClient.value)
       }
-
+      currentManagerId.value = newManagerId
       closeClientModal()
     } catch (e) {
       console.error('Error reassigning:', e)
@@ -131,23 +125,23 @@ export const useCaseManagerStore = defineStore('caseManager', () => {
     }
   }
 
-  // ── Liberar cliente ──────────────────────────────────────
   async function releaseClient() {
     if (!selectedClient.value) return
     actionLoading.value = true
     try {
       await api.delete(`/admin/case-managers/release/${selectedClient.value.id}`)
 
-      // Quitar de la lista de asignados
       modalClients.value = modalClients.value.filter(
         c => c.id !== selectedClient.value.id
       )
-      // Agregar a sin asignar
       modalUnassigned.value.push(selectedClient.value)
 
-      // Actualizar contador en tarjeta
-      const managerInList = managers.value.find(m => m.id === modalManager.value?.id)
-      if (managerInList) managerInList.clients_count = modalClients.value.length
+      currentManagerId.value = null
+
+      // Recargar managers SIN afectar el loading global
+      const { data } = await api.get('/admin/case-managers')
+      managers.value = data.data
+      meta.value = data.meta
 
       closeClientModal()
     } catch (e) {
@@ -156,12 +150,12 @@ export const useCaseManagerStore = defineStore('caseManager', () => {
       actionLoading.value = false
     }
   }
-
   return {
     managers, meta, loading, error,
     modalOpen, modalManager, modalClients, modalUnassigned, modalLoading, activeTab,
     clientModalOpen, selectedClient, allManagers, showReassignList, actionLoading,
     fetchManagers, openClientsModal, closeModal,
     openClientDetail, closeClientModal, reassignClient, releaseClient,
+    currentManagerId,
   }
 })

@@ -1,79 +1,98 @@
 <!-- ClientDetailModal.vue -->
 <template>
     <Teleport to="body">
-
         <Transition name="modal-fade">
             <div v-if="modelValue" class="cd-backdrop" @click.self="$emit('update:modelValue', false)">
                 <div class="cd-modal">
 
-                    <!-- ── LEFT Card ── -->
+                    <!-- ── LEFT Card — Case Manager Asignado ── -->
                     <div class="cd-card">
                         <div class="cd-card__badge">
                             <img :src="logoBadge" alt="RAISE" />
                         </div>
-                        <div class="cd-card__hero">
-                            <div class="cd-card__curve" />
-                            <div class="cd-card__avatar-ring">
-                                <img :src="client?.profile_image || defaultAvatar" :alt="client?.name"
-                                    class="cd-card__avatar" />
-                            </div>
+
+                        <!-- Sin case manager asignado -->
+                        <div v-if="!assignedManager" class="cd-card__no-manager">
+                            <div class="cd-card__no-manager-icon">👤</div>
+                            <p class="cd-card__no-manager-text">{{ $t('caseManagers.noAssigned') }}</p>
                         </div>
-                        <div class="cd-card__info">
-                            <h2 class="cd-card__name">
-                                <span class="cd-card__name--regular">{{ firstName }}</span>
-                                <span class="cd-card__name--accent"> {{ lastName }}</span>
-                            </h2>
-                            <p class="cd-card__position">Job <span>{{ $t('roles.client') }}</span></p>
-                            <div class="cd-card__details">
-                                <div class="cd-card__detail-row">
-                                    <span class="cd-card__detail-label">Email :</span>
-                                    <span class="cd-card__detail-value">{{ client?.email }}</span>
+
+                        <!-- Con case manager asignado -->
+                        <template v-else>
+                            <div class="cd-card__hero">
+                                <div class="cd-card__curve" />
+                                <div class="cd-card__avatar-ring">
+                                    <img :src="assignedManager.profile_image || defaultAvatar"
+                                        :alt="assignedManager.name" class="cd-card__avatar" />
                                 </div>
                             </div>
-                            <div class="cd-card__barcode">
-                                <svg viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
-                                    <g fill="#1a2a4a" opacity="0.7">
-                                        <rect v-for="(bar, i) in barcode" :key="i" :x="bar.x" y="0" :width="bar.w"
-                                            height="40" />
-                                    </g>
-                                </svg>
+                            <div class="cd-card__info">
+                                <h2 class="cd-card__name">
+                                    <span class="cd-card__name--regular">{{ cmFirstName }}</span>
+                                    <span class="cd-card__name--accent"> {{ cmLastName }}</span>
+                                </h2>
+                                <p class="cd-card__position">Job <span>Case Manager</span></p>
+                                <div class="cd-card__details">
+                                    <div class="cd-card__detail-row">
+                                        <span class="cd-card__detail-label">{{ $t('caseManagers.assignedManager')
+                                            }}</span>
+                                    </div>
+                                </div>
+                                <div class="cd-card__barcode">
+                                    <svg viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+                                        <g fill="#1a2a4a" opacity="0.7">
+                                            <rect v-for="(bar, i) in barcode" :key="i" :x="bar.x" y="0" :width="bar.w"
+                                                height="40" />
+                                        </g>
+                                    </svg>
+                                </div>
                             </div>
-                        </div>
+                        </template>
                     </div>
 
-                    <!-- ── RIGHT Panel ── -->
+                    <!-- ── RIGHT Panel — Cliente ── -->
                     <div class="cd-panel">
                         <button class="cd-panel__close" @click="$emit('update:modelValue', false)">✕</button>
 
+                        <!-- Foto cliente -->
                         <div class="cd-panel__avatar-wrap">
                             <div class="cd-panel__avatar-ring">
                                 <img :src="client?.profile_image || defaultAvatar" :alt="client?.name" />
                             </div>
                             <h3 class="cd-panel__name">{{ client?.name }}</h3>
+                            <span class="cd-panel__email">{{ client?.email }}</span>
                         </div>
 
+                        <!-- Acciones -->
+                        <!-- Acciones -->
                         <div class="cd-panel__actions">
                             <button class="cd-action-btn cd-action-btn--reassign" :disabled="actionLoading"
                                 @click="showReassignList = !showReassignList" :title="$t('caseManagers.reassign')">
                                 <span class="cd-action-btn__icon">🔄</span>
                             </button>
-                            <button class="cd-action-btn cd-action-btn--release" :disabled="actionLoading"
-                                @click="$emit('release')" :title="$t('caseManagers.release')">
+
+                            <!-- Solo mostrar si tiene case manager asignado -->
+                            <button v-if="currentManagerId" class="cd-action-btn cd-action-btn--release"
+                                :disabled="actionLoading" @click="$emit('release')" :title="$t('caseManagers.release')">
                                 <span class="cd-action-btn__icon">✕</span>
                             </button>
                         </div>
 
-                        <div class="cd-panel__cm-label">Case Manager</div>
+                        <div class="cd-panel__cm-label">Case Managers</div>
 
+                        <!-- Lista reasignación -->
                         <Transition name="slide-down">
                             <div v-if="showReassignList" class="cd-reassign-list">
-                                <div v-for="manager in managers" :key="manager.id" class="cd-reassign-item"
-                                    :class="{ 'cd-reassign-item--loading': actionLoading }"
-                                    @click="$emit('reassign', manager.id)">
+                                <div v-for="manager in managers" :key="manager.id" class="cd-reassign-item" :class="{
+                                    'cd-reassign-item--assigned': manager.id === currentManagerId,
+                                    'cd-reassign-item--loading': actionLoading
+                                }" @click="$emit('reassign', manager.id)">
                                     <div class="cd-reassign-item__avatar">
                                         <img :src="manager.profile_image || defaultAvatar" :alt="manager.name" />
                                     </div>
                                     <span class="cd-reassign-item__name">{{ manager.name }}</span>
+                                    <span v-if="manager.id === currentManagerId"
+                                        class="cd-reassign-item__badge">✓</span>
                                 </div>
                                 <div v-if="managers.length === 0" class="cd-reassign-empty">
                                     {{ $t('caseManagers.noManagers') }}
@@ -89,7 +108,6 @@
                 </div>
             </div>
         </Transition>
-
     </Teleport>
 </template>
 
@@ -104,15 +122,24 @@ const props = defineProps({
     client: { type: Object, default: null },
     managers: { type: Array, default: () => [] },
     actionLoading: Boolean,
+    currentManagerId: { type: Number, default: null },
 })
 
 defineEmits(['update:modelValue', 'reassign', 'release'])
 
 const showReassignList = ref(false)
 
+const assignedManager = computed(() =>
+    props.managers.find(m => m.id === props.currentManagerId) ?? null
+)
+
 const nameParts = computed(() => props.client?.name?.trim().split(' ') ?? [])
 const firstName = computed(() => nameParts.value[0] ?? '')
 const lastName = computed(() => nameParts.value.slice(1).join(' ') || '')
+
+const cmNameParts = computed(() => assignedManager.value?.name?.trim().split(' ') ?? [])
+const cmFirstName = computed(() => cmNameParts.value[0] ?? $t('caseManagers.noAssigned'))
+const cmLastName = computed(() => cmNameParts.value.slice(1).join(' ') || '')
 
 const barcode = computed(() => {
     const bars = []; let x = 0
@@ -364,6 +391,13 @@ const barcode = computed(() => {
     margin-bottom: 10px;
 }
 
+.cd-panel__email {
+    font-size: 0.78rem;
+    color: #546e7a;
+    text-align: center;
+    margin-top: -4px;
+}
+
 .cd-action-btn {
     width: 48px;
     height: 48px;
@@ -526,5 +560,170 @@ const barcode = computed(() => {
 .slide-down-leave-to {
     opacity: 0;
     transform: translateY(-10px);
+}
+
+@media (max-width: 767px) {
+    .cd-backdrop {
+        align-items: center;
+        padding: 16px 20px;
+    }
+
+    .cd-modal {
+        flex-direction: column;
+        max-width: 100%;
+        max-height: 95vh;
+        border-radius: 22px;
+    }
+
+    .cd-card {
+        width: 100%;
+        min-width: unset;
+        flex-direction: row;
+        align-items: center;
+        padding: 16px;
+        background: linear-gradient(135deg, #1a2a4a 0%, #1565c0 100%);
+        min-height: unset;
+    }
+
+    .cd-card__badge {
+        position: relative;
+        top: unset;
+        left: unset;
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+    }
+
+    .cd-card__hero {
+        width: 70px;
+        height: 70px;
+        flex-shrink: 0;
+    }
+
+    .cd-card__curve {
+        display: none;
+    }
+
+    .cd-card__avatar-ring {
+        width: 70px;
+        height: 70px;
+    }
+
+    .cd-card__info {
+        flex: 1;
+        background: transparent;
+        padding: 0 12px;
+        align-items: flex-start;
+    }
+
+    .cd-card__name {
+        font-size: 0.95rem;
+    }
+
+    .cd-card__name--regular {
+        color: #fff;
+    }
+
+    .cd-card__name--accent {
+        color: #a5f3d0;
+    }
+
+    .cd-card__position {
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0 0 4px;
+    }
+
+    .cd-card__position span {
+        color: #a5f3d0;
+    }
+
+    .cd-card__details {
+        margin-bottom: 0;
+    }
+
+    .cd-card__detail-row {
+        justify-content: flex-start;
+    }
+
+    .cd-card__detail-label {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .cd-card__detail-value {
+        color: #fff;
+    }
+
+    .cd-card__barcode {
+        display: none;
+    }
+
+    .cd-panel {
+        flex: 1;
+        overflow-y: auto;
+        border-radius: 0;
+    }
+}
+
+/* Manager asignado */
+.cd-panel__cm-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #546e7a;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    margin-top: 8px;
+}
+
+.cd-panel__avatar-ring--assigned {
+    background: conic-gradient(#43a047 0deg, #66bb6a 60deg, #2e7d32 120deg,
+            #4caf50 180deg, #43a047 240deg, #66bb6a 300deg, #43a047 360deg);
+}
+
+.cd-reassign-item--assigned {
+    background: rgba(67, 160, 71, 0.2) !important;
+    border: 1.5px solid rgba(67, 160, 71, 0.5);
+}
+
+.cd-reassign-item--assigned:hover {
+    background: rgba(67, 160, 71, 0.3) !important;
+}
+
+.cd-reassign-item__badge {
+    margin-left: auto;
+    background: #43a047;
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.cd-card__no-manager {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    text-align: center;
+}
+
+.cd-card__no-manager-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.cd-card__no-manager-text {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1a2a4a;
+    line-height: 1.4;
 }
 </style>

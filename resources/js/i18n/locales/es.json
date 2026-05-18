@@ -90,18 +90,18 @@
     }
   },
   "nav": {
-    "home":         "Inicio",
-    "dashboard":    "Panel",
-    "users":        "Usuarios",
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "users": "Usuarios",
     "caseManagers": "Gestores",
-    "reports":      "Reportes",
-    "calendar":     "Calendario",
-    "clients":      "Clientes",
+    "reports": "Reportes",
+    "calendar": "Calendario",
+    "clients": "Clientes",
     "appointments": "Citas",
-    "settings":     "Configuración",
-    "logout":       "Cerrar sesión",
-    "profile":      "Perfil",
-    "schedule":     "Agenda"
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil",
+    "schedule": "Agenda"
   },
   "caseManagers": {
     "title": "Case Managers",
@@ -121,6 +121,8 @@
     "noUnassigned": "Sin clientes sin asignar",
     "reassign": "Reasignar a otro Case Manager",
     "release": "Liberar cliente",
-    "noManagers": "No hay case managers disponibles"
+    "noManagers": "No hay case managers disponibles",
+    "assignedManager": "Case Manager Asignado",
+    "noAssigned": "Sin case manager asignado"
   }
 }
