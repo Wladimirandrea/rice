@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\CaseManagerController;
+use App\Http\Controllers\Api\Admin\ScheduleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
@@ -31,14 +32,19 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     // ── Case Managers — estáticas primero ──
     Route::get('/case-managers/all', [CaseManagerController::class, 'allManagers']);
     Route::get('/case-managers/unassigned-clients', [CaseManagerController::class, 'unassignedClients']);
-     Route::get('/case-managers/client/{client}/manager', [CaseManagerController::class, 'clientManager']);
+    Route::get('/case-managers/client/{client}/manager', [CaseManagerController::class, 'clientManager']);
     Route::post('/case-managers/reassign', [CaseManagerController::class, 'reassign']); // ← subir aquí
     Route::get('/case-managers', [CaseManagerController::class, 'index']);
 
     // ── Con parámetros — al final ──
-   
+
     Route::get('/case-managers/{user}/clients', [CaseManagerController::class, 'clients']);
     Route::delete('/case-managers/release/{client}', [CaseManagerController::class, 'release']);
+
+
+    // Module 4 — Schedules
+    Route::get('/schedule', [ScheduleController::class, 'index']);
+    Route::put('/schedule/{schedule}', [ScheduleController::class, 'update']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,case_manager'])->prefix('manager')->group(function () {

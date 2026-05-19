@@ -124,5 +124,14 @@
     "noManagers": "No hay case managers disponibles",
     "assignedManager": "Case Manager Asignado",
     "noAssigned": "Sin case manager asignado"
+  },
+  "schedule": {
+    "title": "Horario de Trabajo",
+    "dayOff": "Día libre",
+    "work": "Trabajo",
+    "save": "Guardar",
+    "saved": "Guardado correctamente",
+    "error": "Error al guardar el horario",
+    "crumb": "Horario"
   }
 }

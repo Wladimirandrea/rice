@@ -124,5 +124,14 @@
     "noManagers": "No case managers available",
     "assignedManager": "Assigned Case Manager",
     "noAssigned": "No case manager assigned"
+  },
+  "schedule": {
+    "title": "Work Schedule",
+    "dayOff": "Day off",
+    "work": "Work",
+    "save": "Save",
+    "saved": "Saved successfully",
+    "error": "Error saving schedule",
+    "crumb": "Schedule"
   }
 }

@@ -17,8 +17,9 @@ const menuItems = computed(() => {
             { label: t('nav.dashboard'), icon: 'fa-house', route: 'admin.dashboard' },
             { label: t('nav.users'), icon: 'fa-users', route: 'admin.users' },
             { label: t('nav.caseManagers'), icon: 'fa-user-tie', route: 'admin.case-managers' },
-            { label: t('nav.reports'), icon: 'fa-chart-bar', route: 'admin.reports' },
+            { label: t('nav.schedule'), icon: 'fa-calendar', route: 'admin.schedule' },
             { label: t('nav.calendar'), icon: 'fa-calendar', route: 'admin.calendar' },
+            
         ]
     }
     if (auth.isCaseManager) {

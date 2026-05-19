@@ -16,6 +16,7 @@ const adminItems = computed(() => [
     { label: t('nav.home'),     icon: 'fa-house',         route: 'admin.dashboard', color: '#4a90e2' },
     { label: t('nav.users'),    icon: 'fa-users',         route: 'admin.users',     color: '#2dd4bf' },
     { label: t('nav.caseManagers'), icon: 'fa-user-tie',      route: 'admin.case-managers',  color: '#a78bfa' },
+    { label: t('nav.schedule'), icon: 'fa-calendar', route: 'admin.schedule' },
     { label: t('nav.calendar'), icon: 'fa-calendar-days', route: 'admin.calendar',  color: '#fb923c' },
     { label: t('nav.reports'),  icon: 'fa-chart-bar',     route: 'admin.reports',   color: '#f472b6' },
 ])

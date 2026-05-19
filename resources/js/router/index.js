@@ -37,6 +37,7 @@ const routes = [
             { path: 'dashboard', name: 'admin.dashboard', component: AdminDashboard },
             { path: 'users', name: 'admin.users', component: UsersView },
             { path: 'case-managers', name: 'admin.case-managers', component: () => import('@/views/admin/CaseManagersView.vue') },
+            { path: 'schedule', name: 'admin.schedule', component: () => import('@/views/admin/ScheduleView.vue'), meta: { requiresAuth: true, role: 'admin' }},
         ],
     },
     {

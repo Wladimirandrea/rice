@@ -139,4 +139,9 @@ class User extends Authenticatable
 
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
+    }
 }
