@@ -456,7 +456,7 @@ async function save() {
 @media (min-width: 1024px) {
 
     .sc-card {
-        width: 280px;
+        width: 240px;
         padding: 32px 22px;
     }
 
@@ -485,7 +485,7 @@ async function save() {
     .sc-time-input {
         width: 78px;
         height: 28px;
-        font-size: 0.82rem;
+        font-size: 0.62rem;
     }
 
     .sc-save-btn {

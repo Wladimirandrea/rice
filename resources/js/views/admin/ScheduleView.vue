@@ -1,13 +1,9 @@
 <template>
     <div class="sc-view">
-        <AppTopbar
-            :title="$t('schedule.title')"
-            :crumbs="[
-                { label: $t('users.crumbs.dashboard'), icon: 'fa-house',    route: 'admin.dashboard' },
-                { label: $t('schedule.title'),          icon: 'fa-calendar' },
-            ]"
-            :actions="[]"
-        />
+        <AppTopbar :title="$t('schedule.title')" :crumbs="[
+            { label: $t('users.crumbs.dashboard'), icon: 'fa-house', route: 'admin.dashboard' },
+            { label: $t('schedule.title'), icon: 'fa-calendar' },
+        ]" :actions="[]" />
 
         <div class="sc-view__body">
             <div class="sc-view__layout">
@@ -22,11 +18,7 @@
                         {{ scheduleStore.error }}
                     </div>
                     <div v-else class="sc-view__grid">
-                        <ScheduleCard
-                            v-for="day in scheduleStore.schedules"
-                            :key="day.day_of_week"
-                            :day="day"
-                        />
+                        <ScheduleCard v-for="day in scheduleStore.schedules" :key="day.day_of_week" :day="day" />
                     </div>
                 </div>
 
@@ -43,13 +35,13 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useScheduleStore } from '@/stores/scheduleStore'
-import { useDayOffStore }   from '@/stores/dayOffStore'
-import ScheduleCard   from '@/components/schedule/ScheduleCard.vue'
-import DaysOffPanel   from '@/components/schedule/DaysOffPanel.vue'
-import AppTopbar      from '@/components/layout/AppTopbar.vue'
+import { useDayOffStore } from '@/stores/dayOffStore'
+import ScheduleCard from '@/components/schedule/ScheduleCard.vue'
+import DaysOffPanel from '@/components/schedule/DaysOffPanel.vue'
+import AppTopbar from '@/components/layout/AppTopbar.vue'
 
 const scheduleStore = useScheduleStore()
-const dayOffStore   = useDayOffStore()
+const dayOffStore = useDayOffStore()
 
 onMounted(() => {
     scheduleStore.fetchSchedule()
@@ -62,24 +54,35 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden;
 }
+
 .sc-view__body {
     padding: 24px;
     flex: 1;
-    overflow-y: auto;
+    overflow-y: hidden;
 }
+
 .sc-view__layout {
     display: flex;
     gap: 24px;
     align-items: flex-start;
+    height: 100%;
 }
+
 .sc-view__left {
     flex: 1;
     min-width: 0;
+    overflow-y: auto;
+    height: 100%;
 }
+
 .sc-view__right {
     flex-shrink: 0;
+    height: 100%;     
+    overflow: hidden;
 }
+
 .sc-view__loading {
     display: flex;
     flex-direction: column;
@@ -88,19 +91,28 @@ onMounted(() => {
     padding: 48px 0;
     color: #90a4ae;
 }
+
 .sc-spinner {
-    width: 40px; height: 40px;
+    width: 40px;
+    height: 40px;
     border: 3px solid #e3eaf4;
     border-top-color: #1565c0;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .sc-view__error {
     text-align: center;
     color: #e53935;
     padding: 48px 0;
 }
+
 .sc-view__grid {
     display: flex;
     flex-wrap: wrap;
@@ -109,11 +121,22 @@ onMounted(() => {
 }
 
 @media (max-width: 1024px) {
-    .sc-view__layout { flex-direction: column; }
-    .sc-view__right  { width: 100%; }
+    .sc-view__layout {
+        flex-direction: column;
+    }
+
+    .sc-view__right {
+        width: 100%;
+    }
 }
+
 @media (max-width: 767px) {
-    .sc-view__body { padding: 16px; }
-    .sc-view__grid { justify-content: center; }
+    .sc-view__body {
+        padding: 16px;
+    }
+
+    .sc-view__grid {
+        justify-content: center;
+    }
 }
 </style>
