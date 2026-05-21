@@ -123,16 +123,29 @@ onMounted(() => {
 @media (max-width: 1024px) {
     .sc-view__layout {
         flex-direction: column;
+        height: auto; 
     }
-
+     .sc-view__left {
+        overflow-y: visible; /* ← quitar scroll interno */
+        height: auto;
+    }
     .sc-view__right {
         width: 100%;
+        height: auto;        
+        overflow: visible;
+    }
+    .sc-view__body {
+        overflow-y: auto;    /* ← restaurar scroll en el body */
     }
 }
 
 @media (max-width: 767px) {
+    .sc-view {
+        overflow: visible;   /* ← quitar overflow hidden */
+    }
     .sc-view__body {
         padding: 16px;
+        overflow-y: auto;
     }
 
     .sc-view__grid {
