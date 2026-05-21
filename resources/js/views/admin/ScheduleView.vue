@@ -1,4 +1,3 @@
-<!-- resources/js/views/admin/ScheduleView.vue -->
 <template>
     <div class="sc-view">
         <AppTopbar
@@ -11,24 +10,31 @@
         />
 
         <div class="sc-view__body">
-            <!-- Loading -->
-            <div v-if="store.loading" class="sc-view__loading">
-                <div class="sc-spinner" />
-                <span>{{ $t('common.loading') }}</span>
-            </div>
+            <div class="sc-view__layout">
 
-            <!-- Error -->
-            <div v-else-if="store.error" class="sc-view__error">
-                {{ store.error }}
-            </div>
+                <!-- Grid de cards -->
+                <div class="sc-view__left">
+                    <div v-if="scheduleStore.loading" class="sc-view__loading">
+                        <div class="sc-spinner" />
+                        <span>{{ $t('common.loading') }}</span>
+                    </div>
+                    <div v-else-if="scheduleStore.error" class="sc-view__error">
+                        {{ scheduleStore.error }}
+                    </div>
+                    <div v-else class="sc-view__grid">
+                        <ScheduleCard
+                            v-for="day in scheduleStore.schedules"
+                            :key="day.day_of_week"
+                            :day="day"
+                        />
+                    </div>
+                </div>
 
-            <!-- Grid de cards -->
-            <div v-else class="sc-view__grid">
-                <ScheduleCard
-                    v-for="day in store.schedules"
-                    :key="day.day_of_week"
-                    :day="day"
-                />
+                <!-- Panel Days Off -->
+                <div class="sc-view__right">
+                    <DaysOffPanel />
+                </div>
+
             </div>
         </div>
     </div>
@@ -37,11 +43,18 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useScheduleStore } from '@/stores/scheduleStore'
-import ScheduleCard from '@/components/schedule/ScheduleCard.vue'
-import AppTopbar from '@/components/layout/AppTopbar.vue'
+import { useDayOffStore }   from '@/stores/dayOffStore'
+import ScheduleCard   from '@/components/schedule/ScheduleCard.vue'
+import DaysOffPanel   from '@/components/schedule/DaysOffPanel.vue'
+import AppTopbar      from '@/components/layout/AppTopbar.vue'
 
-const store = useScheduleStore()
-onMounted(() => store.fetchSchedule())
+const scheduleStore = useScheduleStore()
+const dayOffStore   = useDayOffStore()
+
+onMounted(() => {
+    scheduleStore.fetchSchedule()
+    dayOffStore.fetchDaysOff()
+})
 </script>
 
 <style scoped>
@@ -51,9 +64,21 @@ onMounted(() => store.fetchSchedule())
     height: 100%;
 }
 .sc-view__body {
-    padding: 28px 24px;
+    padding: 24px;
     flex: 1;
     overflow-y: auto;
+}
+.sc-view__layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+.sc-view__left {
+    flex: 1;
+    min-width: 0;
+}
+.sc-view__right {
+    flex-shrink: 0;
 }
 .sc-view__loading {
     display: flex;
@@ -79,10 +104,14 @@ onMounted(() => store.fetchSchedule())
 .sc-view__grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 24px;
+    gap: 20px;
     justify-content: flex-start;
 }
 
+@media (max-width: 1024px) {
+    .sc-view__layout { flex-direction: column; }
+    .sc-view__right  { width: 100%; }
+}
 @media (max-width: 767px) {
     .sc-view__body { padding: 16px; }
     .sc-view__grid { justify-content: center; }

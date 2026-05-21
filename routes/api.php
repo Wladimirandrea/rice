@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\CaseManagerController;
+use App\Http\Controllers\Api\Admin\DayOffController;
 use App\Http\Controllers\Api\Admin\ScheduleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordResetController;
@@ -45,6 +46,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     // Module 4 — Schedules
     Route::get('/schedule', [ScheduleController::class, 'index']);
     Route::put('/schedule/{schedule}', [ScheduleController::class, 'update']);
+
+    // ── Days Off ── prefijo para evitar conflictos
+    Route::get('/days-off',      [DayOffController::class, 'index']);
+    Route::post('/days-off',      [DayOffController::class, 'store']);
+    Route::put('/days-off/{dayOff}',   [DayOffController::class, 'update']);
+    Route::delete('/days-off/{dayOff}',   [DayOffController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,case_manager'])->prefix('manager')->group(function () {

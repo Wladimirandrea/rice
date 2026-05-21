@@ -132,6 +132,13 @@
     "save": "Guardar",
     "saved": "Guardado correctamente",
     "error": "Error al guardar el horario",
-    "crumb": "Horario"
+    "crumb": "Horario",
+    "selectDaysOff": "Seleccionar Días Libres",
+    "daysOff": "Días Libres",
+    "reason": "Razón",
+    "reasonPlaceholder": "Razón opcional...",
+    "noDaysOff": "No hay días libres registrados",
+    "dateRequired": "Por favor selecciona una fecha",
+    "delete": "Eliminar"
   }
 }

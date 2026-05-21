@@ -132,6 +132,13 @@
     "save": "Save",
     "saved": "Saved successfully",
     "error": "Error saving schedule",
-    "crumb": "Schedule"
+    "crumb": "Schedule",
+    "selectDaysOff": "Select Days off",
+    "daysOff": "Days off",
+    "reason": "Reason",
+    "reasonPlaceholder": "Optional reason...",
+    "noDaysOff": "No days off registered",
+    "dateRequired": "Please select a date",
+    "delete": "Delete"
   }
 }

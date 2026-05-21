@@ -150,12 +150,23 @@ export const useCaseManagerStore = defineStore('caseManager', () => {
       actionLoading.value = false
     }
   }
+
+
+  async function fetchAllManagers() {
+    try {
+      const { data } = await api.get('/admin/case-managers/all')
+      allManagers.value = data.managers
+    } catch (e) {
+      allManagers.value = []
+    }
+  }
+
   return {
     managers, meta, loading, error,
     modalOpen, modalManager, modalClients, modalUnassigned, modalLoading, activeTab,
     clientModalOpen, selectedClient, allManagers, showReassignList, actionLoading,
     fetchManagers, openClientsModal, closeModal,
     openClientDetail, closeClientModal, reassignClient, releaseClient,
-    currentManagerId,
+    currentManagerId,fetchAllManagers,
   }
 })
