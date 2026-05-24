@@ -2,6 +2,7 @@
 // routes/api.php
 
 use App\Http\Controllers\Api\Admin\AdminUserController;
+use App\Http\Controllers\Api\Admin\AppointmentController;
 use App\Http\Controllers\Api\Admin\CaseManagerController;
 use App\Http\Controllers\Api\Admin\DayOffController;
 use App\Http\Controllers\Api\Admin\ScheduleController;
@@ -52,6 +53,16 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/days-off',      [DayOffController::class, 'store']);
     Route::put('/days-off/{dayOff}',   [DayOffController::class, 'update']);
     Route::delete('/days-off/{dayOff}',   [DayOffController::class, 'destroy']);
+
+
+    Route::get('/appointments/calendar', [AppointmentController::class, 'calendar']);
+    Route::get('/appointments/calendar',              [AppointmentController::class, 'calendar']);
+    Route::get('/appointments/day',                   [AppointmentController::class, 'day']);
+    Route::post('/appointments',                      [AppointmentController::class, 'store']);
+    Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus']);
+    Route::get('/appointments/slots', [AppointmentController::class, 'slots']);
+
+    
 });
 
 Route::middleware(['auth:sanctum', 'role:admin,case_manager'])->prefix('manager')->group(function () {

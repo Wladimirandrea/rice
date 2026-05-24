@@ -19,6 +19,7 @@ const menuItems = computed(() => {
             { label: t('nav.caseManagers'), icon: 'fa-user-tie', route: 'admin.case-managers' },
             { label: t('nav.schedule'), icon: 'fa-calendar', route: 'admin.schedule' },
             { label: t('nav.calendar'), icon: 'fa-calendar', route: 'admin.calendar' },
+            { label: t('nav.appointments'), icon: 'fa-calendar-check', route: 'admin.appointments' },
             
         ]
     }

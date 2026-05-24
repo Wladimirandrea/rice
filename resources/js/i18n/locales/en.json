@@ -140,5 +140,31 @@
     "noDaysOff": "No days off registered",
     "dateRequired": "Please select a date",
     "delete": "Delete"
+  },
+  "appointments": {
+    "title": "Appointments",
+    "new": "New Appointment",
+    "all": "All",
+    "client": "Client",
+    "caseManager": "Case Manager",
+    "date": "Date",
+    "startTime": "Start Time",
+    "status": "Status",
+    "notes": "Notes",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "changeStatus": "Change Status",
+    "noAppointments": "No appointments for this day",
+    "apptCount": "appt(s)",
+    "selectClient": "Select client...",
+    "selectCM": "Select case manager...",
+    "requiredFields": "Please fill all required fields",
+    "error": "Error saving appointment",
+    "dayOff": "This day is not a working day",
+    "taken": "Taken",
+    "selectCMFirst": "Select a case manager first to see available slots",
+    "noSlots": "No available slots for this day"
   }
 }
