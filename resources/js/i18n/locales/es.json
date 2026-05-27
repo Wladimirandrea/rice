@@ -165,6 +165,11 @@
     "dayOff": "Este día no es un día laborable",
     "taken": "Ocupado",
     "selectCMFirst": "Selecciona un gestor primero para ver los horarios disponibles",
-    "noSlots": "No hay horarios disponibles para este día"
+    "noSlots": "No hay horarios disponibles para este día",
+    "dayOffConflict": "This time slot is not available due to a day off.",
+    "nonWorkingDay": "Appointments cannot be scheduled on non-working days.",
+    "cmConflict": "This case manager already has an appointment at this time.",
+    "clientConflict": "This client already has an appointment at this time."
+    
   }
 }

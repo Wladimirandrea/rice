@@ -149,6 +149,11 @@ class AppointmentController extends Controller
     {
         abort_if(!auth()->user()->isAdmin(), 403);
 
+        // Detectar idioma
+        $lang = $request->header('Accept-Language', 'en');
+        $isEs = str_contains($lang, 'es');
+
+        // 1. Validar primero
         $validated = $request->validate([
             'client_id'       => ['required', 'exists:users,id'],
             'case_manager_id' => ['required', 'exists:users,id'],
@@ -160,7 +165,35 @@ class AppointmentController extends Controller
 
         $validated['end_time'] = date('H:i', strtotime($validated['start_time']) + 1800);
 
-        // ── Verificar conflicto por case manager ──
+        // 2. Verificar día no laborable
+        $dayOfWeek = (int) date('w', strtotime($validated['date']));
+        $schedule  = \App\Models\Schedule::where('day_of_week', $dayOfWeek)->first();
+
+        if (!$schedule?->is_working) {
+            return response()->json([
+                'message' => $isEs
+                    ? 'No se pueden agendar citas en días no laborables.'
+                    : 'Appointments cannot be scheduled on non-working days.',
+            ], 422);
+        }
+
+        // 3. Verificar day off
+        $dayOff = \App\Models\DayOff::whereDate('date', $validated['date'])->first();
+        if ($dayOff) {
+            $startTime   = $validated['start_time'];
+            $dayOffStart = substr($dayOff->start_time, 0, 5);
+            $dayOffEnd   = substr($dayOff->end_time,   0, 5);
+
+            if ($startTime >= $dayOffStart && $startTime < $dayOffEnd) {
+                return response()->json([
+                    'message' => $isEs
+                        ? 'Este horario no está disponible debido a un día libre.'
+                        : 'This time slot is not available due to a day off.',
+                ], 422);
+            }
+        }
+
+        // 4. Verificar conflicto por case manager
         $cmConflict = Appointment::where('case_manager_id', $validated['case_manager_id'])
             ->whereDate('date', $validated['date'])
             ->where('start_time', $validated['start_time'] . ':00')
@@ -169,11 +202,13 @@ class AppointmentController extends Controller
 
         if ($cmConflict) {
             return response()->json([
-                'message' => __('This case manager already has an appointment at this time.'),
+                'message' => $isEs
+                    ? 'Este gestor ya tiene una cita a esta hora.'
+                    : 'This case manager already has an appointment at this time.',
             ], 422);
         }
 
-        // ── Verificar conflicto por cliente ──
+        // 5. Verificar conflicto por cliente
         $clientConflict = Appointment::where('client_id', $validated['client_id'])
             ->whereDate('date', $validated['date'])
             ->where('start_time', $validated['start_time'] . ':00')
@@ -182,10 +217,13 @@ class AppointmentController extends Controller
 
         if ($clientConflict) {
             return response()->json([
-                'message' => __('This client already has an appointment at this time.'),
+                'message' => $isEs
+                    ? 'Este cliente ya tiene una cita a esta hora.'
+                    : 'This client already has an appointment at this time.',
             ], 422);
         }
 
+        // 6. Crear cita
         $appointment = Appointment::create($validated);
         $appointment->load('client:id,name,profile_image', 'caseManager:id,name,profile_image');
 

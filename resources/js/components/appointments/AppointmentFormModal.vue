@@ -43,8 +43,10 @@
                             <label class="af-label">{{ $t('appointments.startTime') }}</label>
                             <select v-model="form.start_time" class="af-select">
                                 <option v-for="slot in availableTimeSlots" :key="slot.time" :value="slot.time"
-                                    :disabled="!slot.available" :class="{ 'af-option--taken': !slot.available }">
-                                    {{ slot.time }} {{ !slot.available ? '— ' + $t('appointments.taken') : '' }}
+                                    :disabled="!slot.available">
+                                    {{ slot.time }}
+                                    {{ slot.day_off ? '— 🌙 ' + $t('appointments.dayOff') : '' }}
+                                    {{ slot.cm_taken ? '— ' + $t('appointments.taken') : '' }}
                                 </option>
                             </select>
                         </div>
@@ -366,16 +368,24 @@ async function save() {
 
 .af-hint {
     font-size: 0.82rem;
-    color: rgba(255,255,255,0.4);
+    color: rgba(255, 255, 255, 0.4);
     padding: 10px 14px;
     border-radius: 10px;
-    border: 1px dashed rgba(255,255,255,0.15);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
     margin: 0;
 }
-.af-hint--warn { color: #f59e0b; border-color: rgba(245,158,11,0.3); }
+
+.af-hint--warn {
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
 .af-slots-loading {
-    display: flex; align-items: center; gap: 8px;
-    color: rgba(255,255,255,0.5); font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
     padding: 10px 14px;
 }
 </style>

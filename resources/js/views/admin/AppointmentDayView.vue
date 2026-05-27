@@ -515,4 +515,63 @@ onMounted(() => store.fetchDay(date.value))
 .day-empty span {
     font-size: 3rem;
 }
+
+/* Agregar al final del <style scoped> en AppointmentDayView.vue */
+
+@media (max-width: 767px) {
+    .day-view__body {
+        padding: 8px 12px 12px;
+        gap: 8px;
+    }
+
+    /* Filtro CM más compacto */
+    .day-cm-filter {
+        padding: 8px 12px;
+        gap: 12px;
+    }
+    .day-cm-avatar {
+        width: 40px; height: 40px;
+    }
+    .day-cm-name {
+        font-size: 0.68rem;
+    }
+
+    /* Header clientes en fila */
+    .day-col-header {
+        flex-direction: row;  /* ← fila en vez de columna */
+        padding: 8px 10px;
+        gap: 8px;
+        min-width: 160px;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .day-col-avatar {
+        width: 32px; height: 32px;
+        flex-shrink: 0;
+    }
+    .day-col-name {
+        font-size: 0.75rem;
+        text-align: left;
+    }
+    .day-col-count {
+        font-size: 0.62rem;
+        margin-left: auto;
+    }
+
+    /* Timeline header más compacto */
+    .day-timeline-header__spacer {
+        width: 50px;
+    }
+    .day-timeline__hours {
+        width: 50px;
+    }
+    .day-timeline__hour {
+        font-size: 0.65rem;
+    }
+
+    /* Citas más compactas */
+    .day-slot { height: 48px; }
+    .day-appt__client { font-size: 0.7rem; }
+    .day-appt__time   { font-size: 0.58rem; }
+}
 </style>
