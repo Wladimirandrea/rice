@@ -4,10 +4,13 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AppointmentCreatedMail;
 use App\Models\Appointment;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AppointmentController extends Controller
 {
@@ -15,7 +18,6 @@ class AppointmentController extends Controller
 
     /**
      * GET /api/admin/appointments/calendar?month=5&year=2026
-     * Retorna citas agrupadas por día con conteo por status
      */
     public function calendar(Request $request): JsonResponse
     {
@@ -43,7 +45,6 @@ class AppointmentController extends Controller
             return $counts;
         });
 
-        // ← Agregar days off del mes
         $daysOff = \App\Models\DayOff::whereMonth('date', $month)
             ->whereYear('date', $year)
             ->get()
@@ -58,10 +59,13 @@ class AppointmentController extends Controller
             'month'    => $month,
             'year'     => $year,
             'calendar' => $calendar,
-            'days_off' => $daysOff,  // ← nuevo
+            'days_off' => $daysOff,
         ]);
     }
 
+    /**
+     * GET /api/admin/appointments/day?date=2026-05-21
+     */
     public function day(Request $request): JsonResponse
     {
         abort_if(!auth()->user()->isAdmin(), 403);
@@ -69,6 +73,7 @@ class AppointmentController extends Controller
         $date      = $request->get('date', now()->format('Y-m-d'));
         $dayOfWeek = (int) date('w', strtotime($date));
         $schedule  = \App\Models\Schedule::where('day_of_week', $dayOfWeek)->first();
+        $dayOff    = \App\Models\DayOff::whereDate('date', $date)->first();
 
         $appointments = Appointment::with([
             'client:id,name,profile_image',
@@ -98,14 +103,13 @@ class AppointmentController extends Controller
 
         $caseManagers = $appointments->pluck('case_manager')->unique('id')->values();
 
-        // ── Generar slots disponibles ──────────────────────────
         $availableSlots = [];
-        $occupiedSlots = $appointments
+        $occupiedSlots  = $appointments
             ->where('status', '!=', 'cancelled')
             ->pluck('start_time')
             ->toArray();
 
-        if ($schedule?->is_working && $schedule->start_time && $schedule->end_time) {
+        if (!$dayOff && $schedule?->is_working && $schedule->start_time && $schedule->end_time) {
             $start = substr($schedule->start_time, 0, 5);
             $end   = substr($schedule->end_time,   0, 5);
 
@@ -132,9 +136,15 @@ class AppointmentController extends Controller
             'date'            => $date,
             'appointments'    => $appointments,
             'case_managers'   => $caseManagers,
-            'available_slots' => $availableSlots,  // ← nuevo
-            'schedule'        => [
-                'is_working' => $schedule?->is_working ?? false,
+            'available_slots' => $availableSlots,
+            'is_day_off'      => (bool) $dayOff,
+            'day_off_info'    => $dayOff ? [
+                'reason'     => $dayOff->reason,
+                'start_time' => substr($dayOff->start_time, 0, 5),
+                'end_time'   => substr($dayOff->end_time,   0, 5),
+            ] : null,
+            'schedule' => [
+                'is_working' => $dayOff ? false : (bool) ($schedule?->is_working ?? false),
                 'start_time' => $schedule?->start_time ? substr($schedule->start_time, 0, 5) : null,
                 'end_time'   => $schedule?->end_time   ? substr($schedule->end_time, 0, 5)   : null,
             ],
@@ -143,17 +153,14 @@ class AppointmentController extends Controller
 
     /**
      * POST /api/admin/appointments
-     * Crear una nueva cita
      */
     public function store(Request $request): JsonResponse
     {
         abort_if(!auth()->user()->isAdmin(), 403);
 
-        // Detectar idioma
         $lang = $request->header('Accept-Language', 'en');
         $isEs = str_contains($lang, 'es');
 
-        // 1. Validar primero
         $validated = $request->validate([
             'client_id'       => ['required', 'exists:users,id'],
             'case_manager_id' => ['required', 'exists:users,id'],
@@ -165,7 +172,7 @@ class AppointmentController extends Controller
 
         $validated['end_time'] = date('H:i', strtotime($validated['start_time']) + 1800);
 
-        // 2. Verificar día no laborable
+        // Verificar día no laborable
         $dayOfWeek = (int) date('w', strtotime($validated['date']));
         $schedule  = \App\Models\Schedule::where('day_of_week', $dayOfWeek)->first();
 
@@ -177,7 +184,7 @@ class AppointmentController extends Controller
             ], 422);
         }
 
-        // 3. Verificar day off
+        // Verificar day off
         $dayOff = \App\Models\DayOff::whereDate('date', $validated['date'])->first();
         if ($dayOff) {
             $startTime   = $validated['start_time'];
@@ -193,7 +200,7 @@ class AppointmentController extends Controller
             }
         }
 
-        // 4. Verificar conflicto por case manager
+        // Verificar conflicto por case manager
         $cmConflict = Appointment::where('case_manager_id', $validated['case_manager_id'])
             ->whereDate('date', $validated['date'])
             ->where('start_time', $validated['start_time'] . ':00')
@@ -208,7 +215,7 @@ class AppointmentController extends Controller
             ], 422);
         }
 
-        // 5. Verificar conflicto por cliente
+        // Verificar conflicto por cliente
         $clientConflict = Appointment::where('client_id', $validated['client_id'])
             ->whereDate('date', $validated['date'])
             ->where('start_time', $validated['start_time'] . ':00')
@@ -223,9 +230,25 @@ class AppointmentController extends Controller
             ], 422);
         }
 
-        // 6. Crear cita
+        // Crear cita
         $appointment = Appointment::create($validated);
-        $appointment->load('client:id,name,profile_image', 'caseManager:id,name,profile_image');
+        $appointment->load('client:id,name,email,profile_image', 'caseManager:id,name,email,profile_image');
+
+        // Enviar emails
+        $locale = $isEs ? 'es' : 'en';
+        $devEmail = app()->environment('local') ? 'wladimirandrea2@gmail.com' : null;
+
+        try {
+            // Correo al cliente
+            Mail::to($devEmail ?? $appointment->client->email)
+                ->send(new AppointmentCreatedMail($appointment, 'client', $locale));
+
+            // Correo al case manager
+            Mail::to($devEmail ?? $appointment->caseManager->email)
+                ->send(new AppointmentCreatedMail($appointment, 'case_manager', $locale));
+        } catch (\Exception $e) {
+            Log::error('Error sending appointment email: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message'     => 'Appointment created successfully.',
@@ -252,7 +275,6 @@ class AppointmentController extends Controller
 
     /**
      * PATCH /api/admin/appointments/{appointment}/status
-     * Cambiar status de una cita
      */
     public function updateStatus(Request $request, Appointment $appointment): JsonResponse
     {
@@ -267,6 +289,9 @@ class AppointmentController extends Controller
         return response()->json(['message' => 'Status updated successfully.']);
     }
 
+    /**
+     * GET /api/admin/appointments/slots?date=2026-05-26&case_manager_id=2
+     */
     public function slots(Request $request): JsonResponse
     {
         abort_if(!auth()->user()->isAdmin(), 403);
@@ -276,16 +301,17 @@ class AppointmentController extends Controller
             'case_manager_id' => ['required', 'exists:users,id'],
         ]);
 
-        $date        = $request->date;
-        $managerId   = $request->case_manager_id;
-        $dayOfWeek   = (int) date('w', strtotime($date));
-        $schedule    = \App\Models\Schedule::where('day_of_week', $dayOfWeek)->first();
+        $date      = $request->date;
+        $managerId = $request->case_manager_id;
+        $dayOfWeek = (int) date('w', strtotime($date));
+        $schedule  = \App\Models\Schedule::where('day_of_week', $dayOfWeek)->first();
 
         if (!$schedule?->is_working) {
             return response()->json(['slots' => [], 'is_working' => false]);
         }
 
-        // Slots ocupados por el case manager
+        $dayOff = \App\Models\DayOff::whereDate('date', $date)->first();
+
         $cmOccupied = Appointment::where('case_manager_id', $managerId)
             ->whereDate('date', $date)
             ->where('status', '!=', 'cancelled')
@@ -293,14 +319,6 @@ class AppointmentController extends Controller
             ->map(fn($t) => substr($t, 0, 5))
             ->toArray();
 
-        // Slots ocupados por cualquier cliente (para verificar conflicto de cliente)
-        $clientOccupied = Appointment::whereDate('date', $date)
-            ->where('status', '!=', 'cancelled')
-            ->pluck('start_time')
-            ->map(fn($t) => substr($t, 0, 5))
-            ->toArray();
-
-        // Generar slots del horario
         $slots = [];
         $start = substr($schedule->start_time, 0, 5);
         $end   = substr($schedule->end_time,   0, 5);
@@ -312,11 +330,21 @@ class AppointmentController extends Controller
         $m = $sm;
         while ($h < $eh || ($h === $eh && $m < $em)) {
             $slot = sprintf('%02d:%02d', $h, $m);
+
+            $isDayOff = false;
+            if ($dayOff) {
+                $dayOffStart = substr($dayOff->start_time, 0, 5);
+                $dayOffEnd   = substr($dayOff->end_time,   0, 5);
+                $isDayOff    = $slot >= $dayOffStart && $slot < $dayOffEnd;
+            }
+
             $slots[] = [
                 'time'      => $slot,
-                'available' => !in_array($slot, $cmOccupied),
+                'available' => !in_array($slot, $cmOccupied) && !$isDayOff,
                 'cm_taken'  => in_array($slot, $cmOccupied),
+                'day_off'   => $isDayOff,
             ];
+
             $m += 30;
             if ($m >= 60) {
                 $m = 0;
