@@ -168,5 +168,17 @@
     "noSlots": "No available slots for this day",
     "createdSuccess": "Appointment scheduled successfully!",
     "emailSent": "A confirmation email has been sent."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "clearAll": "Clear all",
+    "empty": "No notifications yet",
+    "newAppointment": "New appointment",
+    "cancelled": "Cancelled",
+    "status": "Status",
+    "justNow": "Just now",
+    "minsAgo": "m ago",
+    "hoursAgo": "h ago",
+    "daysAgo": "d ago"
   }
 }

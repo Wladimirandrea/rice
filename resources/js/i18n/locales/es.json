@@ -172,7 +172,17 @@
     "clientConflict": "This client already has an appointment at this time.",
     "createdSuccess": "¡Cita agendada exitosamente!",
     "emailSent": "Se envió un correo de confirmación."
-   
-    
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "clearAll": "Borrar todo",
+    "empty": "Sin notificaciones aún",
+    "newAppointment": "Nueva cita",
+    "cancelled": "Cancelada",
+    "status": "Estado",
+    "justNow": "Ahora mismo",
+    "minsAgo": "min",
+    "hoursAgo": "h",
+    "daysAgo": "d"
   }
 }

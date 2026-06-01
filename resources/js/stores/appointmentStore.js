@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/plugins/axios'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 export const useAppointmentStore = defineStore('appointment', () => {
     // ── Calendar ──────────────────────────────────────────
@@ -93,7 +94,6 @@ export const useAppointmentStore = defineStore('appointment', () => {
             dayAppointments.value.push(data.appointment)
             dayAppointments.value.sort((a, b) => a.start_time.localeCompare(b.start_time))
 
-            // Actualizar contador en calendar
             const key = payload.date
             if (!calendar.value[key]) {
                 calendar.value[key] = { pending: 0, confirmed: 0, completed: 0, cancelled: 0, total: 0 }
@@ -101,16 +101,23 @@ export const useAppointmentStore = defineStore('appointment', () => {
             calendar.value[key][payload.status]++
             calendar.value[key].total++
 
-            // Marcar slot como ocupado
             const slotIdx = availableSlots.value.findIndex(s => s.time === payload.start_time)
             if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
 
-            // ← Actualizar dayCaseManagers en tiempo real
             const newCM = data.appointment.case_manager
             const alreadyExists = dayCaseManagers.value.some(cm => cm.id === newCM.id)
-            if (!alreadyExists) {
-                dayCaseManagers.value.push(newCM)
-            }
+            if (!alreadyExists) dayCaseManagers.value.push(newCM)
+
+            // ✅ Notificación
+            const notifStore = useNotificationStore()
+            notifStore.add({
+                type: 'created',
+                clientName: data.appointment.client.name,
+                caseManagerName: data.appointment.case_manager.name,
+                date: data.appointment.date,
+                time: data.appointment.start_time,
+                status: data.appointment.status,
+            })
 
             return { success: true, appointment: data.appointment }
         } catch (e) {
@@ -121,6 +128,7 @@ export const useAppointmentStore = defineStore('appointment', () => {
         }
     }
 
+    // Reemplaza updateStatus completo:
     async function updateStatus(id, status) {
         try {
             await api.patch(`/admin/appointments/${id}/status`, { status })
@@ -130,16 +138,25 @@ export const useAppointmentStore = defineStore('appointment', () => {
                 const prevStatus = appt.status
                 appt.status = status
 
-                // Si se cancela → liberar slot
                 if (status === 'cancelled') {
                     const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
                     if (slotIdx !== -1) availableSlots.value[slotIdx].available = true
                 }
-                // Si se reactiva desde cancelled → ocupar slot
                 if (prevStatus === 'cancelled' && status !== 'cancelled') {
                     const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
                     if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
                 }
+
+                // ✅ Notificación
+                const notifStore = useNotificationStore()
+                notifStore.add({
+                    type: status === 'cancelled' ? 'cancelled' : 'status_changed',
+                    clientName: appt.client.name,
+                    caseManagerName: appt.case_manager.name,
+                    date: appt.date,
+                    time: appt.start_time,
+                    status,
+                })
             }
             return { success: true }
         } catch (e) {

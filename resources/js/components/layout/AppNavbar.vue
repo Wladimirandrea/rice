@@ -4,18 +4,43 @@ import { useI18n } from 'vue-i18n'
 import { useLocale } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 const emit = defineEmits(['toggle'])
 const { t } = useI18n()
 const { locale, setLocale } = useLocale()
 const authStore = useAuthStore()
+const notifStore = useNotificationStore()
 const router = useRouter()
+
 const langOpen = ref(false)
 const profileOpen = ref(false)
+const notifOpen = ref(false)
 
-function toggleLocale(lang) {
-    setLocale(lang)
-    langOpen.value = false
+function toggleLocale(lang) { setLocale(lang); langOpen.value = false }
+
+function toggleNotif() {
+    notifOpen.value = !notifOpen.value
+    if (notifOpen.value) notifStore.markAllRead()
+}
+
+function formatNotif(n) {
+    const icons = { created: '📅', status_changed: '🔄', cancelled: '❌' }
+    const statusColors = {
+        pending: '#f59e0b',
+        confirmed: '#3b82f6',
+        completed: '#22c55e',
+        cancelled: '#ef4444',
+    }
+    return { icon: icons[n.type] ?? '🔔', color: statusColors[n.status] ?? '#7a8aaa' }
+}
+
+function timeAgo(isoDate) {
+    const diff = Math.floor((Date.now() - new Date(isoDate)) / 1000)
+    if (diff < 60) return t('notifications.justNow')
+    if (diff < 3600) return `${Math.floor(diff / 60)}${t('notifications.minsAgo')}`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}${t('notifications.hoursAgo')}`
+    return `${Math.floor(diff / 86400)}${t('notifications.daysAgo')}`
 }
 
 async function logout() {
@@ -37,10 +62,10 @@ const initials = computed(() => {
         </button>
         <div class="nav-right">
 
-            <!-- Language selector -->
+            <!-- Language -->
             <div class="lang-selector">
                 <button class="lang-btn" @click="langOpen = !langOpen">
-                    <span class="lang-flag">{{ locale === 'en' ? '🇺🇸' : '🇲🇽' }}</span>
+                    <span>{{ locale === 'en' ? '🇺🇸' : '🇲🇽' }}</span>
                     <span class="lang-code">{{ locale.toUpperCase() }}</span>
                     <i class="fa fa-chevron-down lang-arrow" :class="{ rotated: langOpen }"></i>
                 </button>
@@ -52,19 +77,58 @@ const initials = computed(() => {
                         <span>Español (ES)</span><span>🇲🇽</span>
                     </button>
                 </div>
+                <div v-if="langOpen" class="profile-overlay" @click="langOpen = false" />
             </div>
 
             <div class="nav-divider"></div>
 
             <!-- Notifications -->
-            <div class="nav-icon-btn" title="Notifications">
-                <i class="fa fa-bell"></i>
-                <span class="nav-badge">2</span>
+            <div class="notif-wrapper">
+                <div class="nav-icon-btn" @click="toggleNotif">
+                    <i class="fa fa-bell"></i>
+                    <span v-if="notifStore.unreadCount > 0" class="nav-badge">
+                        {{ notifStore.unreadCount > 9 ? '9+' : notifStore.unreadCount }}
+                    </span>
+                </div>
+
+                <Transition name="dropdown-fade">
+                    <div v-if="notifOpen" class="notif-dropdown">
+                        <div class="notif-header">
+                            <span class="notif-title">{{ $t('notifications.title') }}</span>
+                            <button v-if="notifStore.notifications.length" class="notif-clear"
+                                @click="notifStore.clear()">
+                                {{ $t('notifications.clearAll') }}
+                            </button>
+                        </div>
+                        <div class="notif-list">
+                            <div v-if="notifStore.notifications.length === 0" class="notif-empty">
+                                <i class="fa fa-bell-slash"></i>
+                                <span>{{ $t('notifications.empty') }}</span>
+                            </div>
+                            <div v-for="n in notifStore.notifications" :key="n.id" class="notif-item"
+                                :class="{ 'notif-item--unread': !n.read }">
+                                <div class="notif-icon">{{ formatNotif(n).icon }}</div>
+                                <div class="notif-content">
+                                    <p class="notif-text">
+                                        <strong>{{ n.clientName }}</strong>
+                                        <span v-if="n.type === 'created'"> — {{ $t('notifications.newAppointment') }}</span>
+                                        <span v-else-if="n.type === 'cancelled'"> — {{ $t('notifications.cancelled') }}</span>
+                                        <span v-else> — {{ $t('notifications.status') }}: <span class="notif-status"
+                                                :style="{ color: formatNotif(n).color }">{{ n.status }}</span></span>
+                                    </p>
+                                    <p class="notif-meta">{{ n.date }} · {{ n.time }} · {{ n.caseManagerName }} · {{ timeAgo(n.createdAt) }}</p>
+                                </div>
+                                <div v-if="!n.read" class="notif-dot" />
+                            </div>
+                        </div>
+                    </div>
+                </Transition>
+                <div v-if="notifOpen" class="profile-overlay" @click="notifOpen = false" />
             </div>
 
             <div class="nav-divider"></div>
 
-            <!-- Profile dropdown -->
+            <!-- Profile -->
             <div class="profile-selector">
                 <div class="nav-profile" @click="profileOpen = !profileOpen">
                     <div class="nav-avatar">{{ initials }}</div>
@@ -74,9 +138,7 @@ const initials = computed(() => {
                     </div>
                     <i class="fa fa-chevron-down nav-chevron" :class="{ rotated: profileOpen }"></i>
                 </div>
-
                 <div class="profile-dropdown" :class="{ open: profileOpen }">
-                    <!-- Info header -->
                     <div class="profile-dropdown__header">
                         <div class="profile-dropdown__avatar">{{ initials }}</div>
                         <div class="profile-dropdown__meta">
@@ -84,17 +146,12 @@ const initials = computed(() => {
                             <span class="profile-dropdown__email">{{ authStore.user?.email }}</span>
                         </div>
                     </div>
-
                     <div class="profile-dropdown__divider" />
-
-                    <!-- Logout -->
                     <button class="profile-dropdown__logout" @click="logout">
                         <i class="fa-solid fa-right-from-bracket" />
                         <span>{{ $t('nav.logout') }}</span>
                     </button>
                 </div>
-
-                <!-- Overlay para cerrar al hacer click fuera -->
                 <div v-if="profileOpen" class="profile-overlay" @click="profileOpen = false" />
             </div>
 
@@ -125,7 +182,10 @@ const initials = computed(() => {
     display: flex;
     align-items: center;
 }
-.toggle-btn:hover { background: rgba(255,255,255,0.08); }
+
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
 
 .nav-right {
     display: flex;
@@ -134,7 +194,6 @@ const initials = computed(() => {
     margin-left: auto;
 }
 
-/* ── Notifications ── */
 .nav-icon-btn {
     position: relative;
     width: 36px;
@@ -148,7 +207,11 @@ const initials = computed(() => {
     color: #c9d4e8;
     font-size: 16px;
 }
-.nav-icon-btn:hover { background: #1e2a3a; }
+
+.nav-icon-btn:hover {
+    background: #1e2a3a;
+}
+
 .nav-badge {
     position: absolute;
     top: 2px;
@@ -174,8 +237,11 @@ const initials = computed(() => {
     margin: 0 4px;
 }
 
-/* ── Language ── */
-.lang-selector { position: relative; }
+/* Language */
+.lang-selector {
+    position: relative;
+}
+
 .lang-btn {
     display: flex;
     align-items: center;
@@ -189,9 +255,25 @@ const initials = computed(() => {
     cursor: pointer;
     transition: background 0.2s;
 }
-.lang-btn:hover { background: #2a3a55; }
-.lang-arrow { font-size: 10px; color: #7a8aaa; transition: transform 0.2s; }
-.lang-arrow.rotated { transform: rotate(180deg); }
+
+.lang-btn:hover {
+    background: #2a3a55;
+}
+
+.lang-code {
+    font-size: 12px;
+}
+
+.lang-arrow {
+    font-size: 10px;
+    color: #7a8aaa;
+    transition: transform 0.2s;
+}
+
+.lang-arrow.rotated {
+    transform: rotate(180deg);
+}
+
 .lang-dropdown {
     position: absolute;
     top: calc(100% + 8px);
@@ -205,9 +287,15 @@ const initials = computed(() => {
     pointer-events: none;
     transform: translateY(-6px);
     transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 999;
+    z-index: 1001;
 }
-.lang-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+.lang-dropdown.open {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+}
+
 .lang-option {
     display: flex;
     align-items: center;
@@ -222,11 +310,155 @@ const initials = computed(() => {
     border: none;
     font-family: 'Segoe UI', sans-serif;
 }
-.lang-option:hover { background: #1e2a3a; color: white; }
-.lang-option.active { color: white; }
 
-/* ── Profile ── */
-.profile-selector { position: relative; }
+.lang-option:hover {
+    background: #1e2a3a;
+    color: white;
+}
+
+.lang-option.active {
+    color: white;
+}
+
+/* Notifications */
+.notif-wrapper {
+    position: relative;
+}
+
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #111827;
+    border: 1px solid #1e2a3a;
+    border-radius: 14px;
+    width: 320px;
+    max-height: 420px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1001;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #1e2a3a;
+    flex-shrink: 0;
+}
+
+.notif-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.notif-clear {
+    font-size: 11px;
+    color: #7a8aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Segoe UI', sans-serif;
+    transition: color 0.2s;
+}
+
+.notif-clear:hover {
+    color: #f87171;
+}
+
+.notif-list {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px 16px;
+    color: #7a8aaa;
+    font-size: 13px;
+}
+
+.notif-empty i {
+    font-size: 24px;
+    opacity: 0.4;
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #1a2235;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-item:hover {
+    background: #1a2235;
+}
+
+.notif-item--unread {
+    background: rgba(74, 144, 226, 0.05);
+}
+
+.notif-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-text {
+    font-size: 12px;
+    color: #c9d4e8;
+    margin: 0 0 4px;
+    line-height: 1.4;
+}
+
+.notif-text strong {
+    color: #fff;
+}
+
+.notif-status {
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.notif-meta {
+    font-size: 11px;
+    color: #7a8aaa;
+    margin: 0;
+}
+
+.notif-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4a90e2;
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+
+/* Profile */
+.profile-selector {
+    position: relative;
+}
 
 .nav-profile {
     display: flex;
@@ -238,7 +470,10 @@ const initials = computed(() => {
     cursor: pointer;
     transition: background 0.2s;
 }
-.nav-profile:hover { background: #1e2a3a; }
+
+.nav-profile:hover {
+    background: #1e2a3a;
+}
 
 .nav-avatar {
     width: 30px;
@@ -278,9 +513,11 @@ const initials = computed(() => {
     font-size: 11px;
     transition: transform 0.2s;
 }
-.nav-chevron.rotated { transform: rotate(180deg); }
 
-/* ── Profile dropdown ── */
+.nav-chevron.rotated {
+    transform: rotate(180deg);
+}
+
 .profile-dropdown {
     position: absolute;
     top: calc(100% + 8px);
@@ -293,9 +530,10 @@ const initials = computed(() => {
     pointer-events: none;
     transform: translateY(-6px);
     transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 1000;
+    z-index: 1001;
     overflow: hidden;
 }
+
 .profile-dropdown.open {
     opacity: 1;
     pointer-events: all;
@@ -350,7 +588,6 @@ const initials = computed(() => {
 .profile-dropdown__divider {
     height: 1px;
     background: #1e2a3a;
-    margin: 0;
 }
 
 .profile-dropdown__logout {
@@ -368,18 +605,31 @@ const initials = computed(() => {
     transition: background 0.2s, color 0.2s;
     text-align: left;
 }
+
 .profile-dropdown__logout:hover {
     background: rgba(248, 113, 113, 0.1);
     color: #fca5a5;
 }
+
 .profile-dropdown__logout i {
     font-size: 14px;
 }
 
-/* Overlay para cerrar */
 .profile-overlay {
     position: fixed;
     inset: 0;
-    z-index: 999;
+    z-index: 1000;
+}
+
+/* Transitions */
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
 }
 </style>
