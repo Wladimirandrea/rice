@@ -4,44 +4,63 @@
         <Transition name="modal-fade">
             <div v-if="modelValue" class="af-backdrop" @click.self="$emit('update:modelValue', false)">
                 <div class="af-modal">
+                    <!-- Header -->
                     <div class="af-header">
                         <h3 class="af-title">{{ $t('appointments.new') }}</h3>
-                        <button class="af-close" @click="$emit('update:modelValue', false)">✕</button>
+                        <button class="af-close" @click="$emit('update:modelValue', false)">X</button>
                     </div>
 
                     <div class="af-body">
+
                         <!-- Cliente -->
-                        <div class="af-field">
-                            <label class="af-label">{{ $t('appointments.client') }}</label>
-                            <select v-model="form.client_id" class="af-select">
-                                <option value="">{{ $t('appointments.selectClient') }}</option>
-                                <option v-for="c in clients" :key="c.id" :value="c.id">
-                                    {{ c.name }}
-                                </option>
-                            </select>
+                        <div class="af-section">
+                            <label class="af-section__label">{{ $t('appointments.client') }}</label>
+                            <div class="af-avatars">
+                                <div v-for="c in clients" :key="c.id" class="af-avatar-item"
+                                    :class="{ 'af-avatar-item--selected': form.client_id === c.id }"
+                                    @click="form.client_id = c.id">
+                                    <div class="af-avatar-ring">
+                                        <img :src="c.profile_image_url || defaultAvatar" :alt="c.name" />
+                                    </div>
+                                    <span class="af-avatar-name">{{ c.name.split(' ')[0] }}</span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Case Manager -->
-                        <div class="af-field">
-                            <label class="af-label">{{ $t('appointments.caseManager') }}</label>
-                            <select v-model="form.case_manager_id" class="af-select">
-                                <option value="">{{ $t('appointments.selectCM') }}</option>
-                                <option v-for="cm in caseManagers" :key="cm.id" :value="cm.id">
-                                    {{ cm.name }}
-                                </option>
-                            </select>
+                        <div class="af-section">
+                            <label class="af-section__label">{{ $t('appointments.caseManager') }}</label>
+                            <div class="af-avatars">
+                                <div v-for="cm in caseManagers" :key="cm.id" class="af-avatar-item"
+                                    :class="{ 'af-avatar-item--selected': form.case_manager_id === cm.id }"
+                                    @click="form.case_manager_id = cm.id">
+                                    <div class="af-avatar-ring">
+                                        <img :src="cm.profile_image || defaultAvatar" :alt="cm.name" />
+                                    </div>
+                                    <span class="af-avatar-name">{{ cm.name.split(' ')[0] }}</span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Fecha -->
-                        <div class="af-field">
-                            <label class="af-label">{{ $t('appointments.date') }}</label>
+                        <div class="af-section">
+                            <label class="af-section__label">{{ $t('appointments.date') }}</label>
                             <input v-model="form.date" type="date" class="af-input" />
                         </div>
 
-                        <!-- Hora inicio — slots del schedule -->
-                        <div class="af-field">
-                            <label class="af-label">{{ $t('appointments.startTime') }}</label>
-                            <select v-model="form.start_time" class="af-select">
+                        <!-- Hora inicio -->
+                        <div class="af-section">
+                            <label class="af-section__label">{{ $t('appointments.startTime') }}</label>
+                            <p v-if="!form.case_manager_id" class="af-hint">
+                                {{ $t('appointments.selectCMFirst') }}
+                            </p>
+                            <div v-else-if="loadingSlots" class="af-slots-loading">
+                                <span class="af-spinner" /> {{ $t('common.loading') }}
+                            </div>
+                            <p v-else-if="availableTimeSlots.length === 0" class="af-hint af-hint--warn">
+                                {{ $t('appointments.noSlots') }}
+                            </p>
+                            <select v-else v-model="form.start_time" class="af-select">
                                 <option v-for="slot in availableTimeSlots" :key="slot.time" :value="slot.time"
                                     :disabled="!slot.available">
                                     {{ slot.time }}
@@ -52,24 +71,29 @@
                         </div>
 
                         <!-- Status -->
-                        <div class="af-field">
-                            <label class="af-label">{{ $t('appointments.status') }}</label>
-                            <select v-model="form.status" class="af-select">
-                                <option value="pending">{{ $t('appointments.pending') }}</option>
-                                <option value="confirmed">{{ $t('appointments.confirmed') }}</option>
-                            </select>
+                        <div class="af-section">
+                            <label class="af-section__label">{{ $t('appointments.status') }}</label>
+                            <div class="af-status-row">
+                                <button v-for="s in ['pending', 'confirmed']" :key="s" class="af-status-btn"
+                                    :class="[`af-status-btn--${s}`, { 'af-status-btn--active': form.status === s }]"
+                                    @click="form.status = s">
+                                    {{ $t(`appointments.${s}`) }}
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Notas -->
-                        <div class="af-field">
-                            <label class="af-label">{{ $t('appointments.notes') }}</label>
-                            <textarea v-model="form.notes" class="af-textarea" rows="3" />
+                        <!-- Reason / Notas -->
+                        <div class="af-section">
+                            <label class="af-section__label">Reason</label>
+                            <input v-model="form.notes" type="text" class="af-input"
+                                :placeholder="$t('schedule.reasonPlaceholder')" />
                         </div>
 
                         <!-- Error -->
                         <p v-if="errorMsg" class="af-error">{{ errorMsg }}</p>
                     </div>
 
+                    <!-- Footer -->
                     <div class="af-footer">
                         <button class="af-btn af-btn--cancel" @click="$emit('update:modelValue', false)">
                             {{ $t('common.cancel') }}
@@ -86,13 +110,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'  // ← agregar watch
+import { ref, computed, watch, onMounted, h } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppointmentStore } from '@/stores/appointmentStore'
 import api from '@/plugins/axios'
+import { toast } from 'vue3-toastify'
 
 const { t } = useI18n()
 const store = useAppointmentStore()
+
+const defaultAvatar = 'https://ui-avatars.com/api/?name=C&background=1565c0&color=fff'
 
 const props = defineProps({
     modelValue: Boolean,
@@ -114,13 +141,11 @@ const form = ref({
     notes: '',
 })
 
-// ← Watch: cuando cambia date o case_manager_id, cargar slots
 watch(
     () => [form.value.date, form.value.case_manager_id],
     ([date, managerId]) => {
         if (date && managerId) {
             store.fetchSlots(date, managerId).then(() => {
-                // Preseleccionar primer slot disponible
                 const first = store.formSlots.find(s => s.available)
                 form.value.start_time = first?.time ?? ''
             })
@@ -130,9 +155,7 @@ watch(
     }
 )
 
-// Slots disponibles del store
 const availableTimeSlots = computed(() => store.formSlots)
-
 const loadingSlots = computed(() => store.loadingSlots)
 
 onMounted(async () => {
@@ -143,7 +166,6 @@ onMounted(async () => {
     clients.value = cl.data.data
     caseManagers.value = cm.data.managers
 
-    // Si ya hay fecha y manager precargados
     if (form.value.date && form.value.case_manager_id) {
         await store.fetchSlots(form.value.date, form.value.case_manager_id)
         const first = store.formSlots.find(s => s.available)
@@ -162,12 +184,32 @@ async function save() {
     saving.value = false
 
     if (result.success) {
-        form.value = {
-            client_id: '', case_manager_id: '',
-            date: props.date, start_time: '', status: 'pending', notes: ''
-        }
+        toast.success(
+            () => h('div', {
+                style: 'display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px 0;'
+            }, [
+                h('img', {
+                    src: '/images/success.gif',
+                    style: 'width:140px; height:120px; object-fit:cover; border-radius:8px;'
+                }),
+                h('span', {
+                    style: 'font-weight:700; font-size:0.95rem; text-align:center;'
+                }, t('appointments.createdSuccess')),
+                h('span', {
+                    style: 'font-size:0.78rem; opacity:0.7; text-align:center;'
+                }, t('appointments.emailSent')),
+            ]),
+            {
+                autoClose: 4000,
+                icon: false,
+                style: 'min-width: 220px;',
+            }
+        )
+        form.value = { client_id: '', case_manager_id: '', date: props.date, start_time: '', status: 'pending', notes: '' }
+        emit('update:modelValue', false)
         emit('created')
     } else {
+        toast.error(result.message ?? t('appointments.error'))
         errorMsg.value = result.message ?? t('appointments.error')
     }
 }
@@ -187,151 +229,262 @@ async function save() {
 }
 
 .af-modal {
-    background: #1a2a4a;
-    border-radius: 20px;
+    background: #2a6dd9;
+    border-radius: 24px;
     width: 100%;
     max-width: 480px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
 }
 
+/* Header */
 .af-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 22px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 20px 22px 16px;
 }
 
 .af-title {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: #fff;
     margin: 0;
 }
 
 .af-close {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.2);
     border: none;
     color: #fff;
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     cursor: pointer;
     font-size: 0.85rem;
+    font-weight: 700;
     transition: background 0.2s;
 }
 
 .af-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.35);
 }
 
+/* Body */
 .af-body {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 22px;
+    padding: 0 22px 16px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 18px;
 }
 
-.af-field {
+/* Section */
+.af-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
 }
 
-.af-label {
-    font-size: 0.78rem;
+.af-section__label {
+    font-size: 0.95rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    color: #fff;
+    text-align: center;
+    letter-spacing: 0.02em;
 }
 
-.af-select,
+/* Avatares */
+.af-avatars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+
+.af-avatar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.af-avatar-item:hover {
+    transform: scale(1.08);
+}
+
+.af-avatar-ring {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.af-avatar-item--selected .af-avatar-ring {
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+.af-avatar-ring img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.af-avatar-name {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+}
+
+/* Inputs */
 .af-input,
-.af-textarea {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
+.af-select {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 14px;
     color: #fff;
-    font-size: 0.9rem;
-    padding: 10px 14px;
+    font-size: 0.95rem;
+    padding: 12px 16px;
     outline: none;
     font-family: 'Segoe UI', sans-serif;
-    transition: border-color 0.2s;
     width: 100%;
+    transition: background 0.2s;
 }
 
-.af-select:focus,
 .af-input:focus,
-.af-textarea:focus {
-    border-color: #3b82f6;
+.af-select:focus {
+    background: rgba(255, 255, 255, 0.22);
 }
 
-.af-select option {
-    background: #1a2a4a;
-}
-
-.af-option--taken {
-    color: rgba(255, 255, 255, 0.3);
-}
-
-.af-textarea {
-    resize: vertical;
-    min-height: 80px;
+.af-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .af-input::-webkit-calendar-picker-indicator {
     filter: invert(1);
+    cursor: pointer;
 }
 
+.af-select option {
+    background: #2a6dd9;
+    color: #fff;
+}
+
+.af-select option:disabled {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Status buttons */
+.af-status-row {
+    display: flex;
+    gap: 10px;
+}
+
+.af-status-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s, border-color 0.2s;
+    color: #fff;
+}
+
+.af-status-btn--active {
+    opacity: 1;
+    border-color: #fff;
+}
+
+.af-status-btn--pending {
+    background: rgba(245, 158, 11, 0.7);
+}
+
+.af-status-btn--confirmed {
+    background: rgba(59, 130, 246, 0.7);
+}
+
+/* Hints */
+.af-hint {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    margin: 0;
+    text-align: center;
+}
+
+.af-hint--warn {
+    color: #fcd34d;
+    border-color: rgba(252, 211, 77, 0.3);
+}
+
+.af-slots-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    padding: 10px 14px;
+}
+
+/* Error */
 .af-error {
-    color: #ff8a80;
-    font-size: 0.78rem;
+    color: #fca5a5;
+    font-size: 0.82rem;
     text-align: center;
     margin: 0;
 }
 
+/* Footer */
 .af-footer {
     display: flex;
     gap: 10px;
-    padding: 16px 22px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 22px 20px;
 }
 
 .af-btn {
     flex: 1;
-    padding: 11px;
-    border-radius: 10px;
+    padding: 13px;
+    border-radius: 14px;
     border: none;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: filter 0.2s;
+    transition: filter 0.2s, transform 0.15s;
 }
 
 .af-btn--cancel {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.af-btn--cancel:hover {
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .af-btn--save {
-    background: #3b82f6;
+    background: #1a3a6e;
     color: #fff;
 }
 
 .af-btn--save:hover:not(:disabled) {
-    filter: brightness(1.1);
+    filter: brightness(1.2);
 }
 
 .af-btn:disabled {
@@ -339,6 +492,7 @@ async function save() {
     cursor: not-allowed;
 }
 
+/* Spinner */
 .af-spinner {
     width: 16px;
     height: 16px;
@@ -355,6 +509,7 @@ async function save() {
     }
 }
 
+/* Transitions */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
     transition: opacity 0.25s, transform 0.25s;
@@ -364,28 +519,5 @@ async function save() {
 .modal-fade-leave-to {
     opacity: 0;
     transform: scale(0.96);
-}
-
-.af-hint {
-    font-size: 0.82rem;
-    color: rgba(255, 255, 255, 0.4);
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px dashed rgba(255, 255, 255, 0.15);
-    margin: 0;
-}
-
-.af-hint--warn {
-    color: #f59e0b;
-    border-color: rgba(245, 158, 11, 0.3);
-}
-
-.af-slots-loading {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.85rem;
-    padding: 10px 14px;
 }
 </style>

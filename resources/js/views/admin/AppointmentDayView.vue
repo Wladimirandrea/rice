@@ -5,7 +5,7 @@
             { label: $t('users.crumbs.dashboard'), icon: 'fa-house', route: 'admin.dashboard' },
             { label: $t('appointments.title'), icon: 'fa-calendar-check', route: 'admin.appointments' },
             { label: formattedDate, icon: 'fa-calendar-day' },
-        ]" :actions="[{ label: $t('appointments.new'), icon: 'fa-plus', type: 'primary', emit: 'new' }]"
+        ]" :actions="[{ label: $t('appointments.new'), icon: 'fa-plus', type: 'primary', emit: 'new', disabled: !store.daySchedule?.is_working }]"
             @action="onAction" />
 
         <div class="day-view__body">
@@ -37,8 +37,13 @@
 
             <!-- Día no laborable -->
             <div v-else-if="!store.daySchedule?.is_working" class="day-day-off">
-                <span>🌙</span>
-                <p>{{ $t('appointments.dayOff') }}</p>
+                <div class="day-day-off__icon-wrap">
+                    <i class="fa-solid fa-moon" />
+                </div>
+                <p class="day-day-off__title">{{ $t('appointments.dayOff') }}</p>
+                <p v-if="store.daySchedule?.reason" class="day-day-off__reason">
+                    "{{ store.daySchedule.reason }}"
+                </p>
             </div>
 
             <!-- Sin citas -->
@@ -53,7 +58,7 @@
                 <!-- Headers clientes — FUERA del scroll -->
                 <div class="day-timeline-header">
                     <div class="day-timeline-header__spacer" />
-                    <div class="day-timeline-header__clients">
+                    <div class="day-timeline-header__clients" ref="headerClients">
                         <div v-for="client in filteredClients" :key="client.id" class="day-col-header">
                             <img :src="client.profile_image || defaultAvatar" :alt="client.name"
                                 class="day-col-avatar" />
@@ -65,7 +70,7 @@
                 </div>
 
                 <!-- Body con scroll único -->
-                <div class="day-timeline-body">
+                <div class="day-timeline-body" ref="timelineBody" @scroll="syncScroll">
                     <!-- Columna horas -->
                     <div class="day-timeline__hours">
                         <div v-for="slot in timeSlots" :key="slot" class="day-timeline__hour">
@@ -119,6 +124,8 @@ const defaultAvatar = 'https://ui-avatars.com/api/?name=C&background=1565c0&colo
 const showForm = ref(false)
 const showDetail = ref(false)
 const selectedAppt = ref(null)
+const timelineBody = ref(null)
+const headerClients = ref(null)
 
 const date = computed(() => route.params.date)
 
@@ -176,7 +183,10 @@ function getSlotAppointment(clientId, slot) {
 }
 
 function onAction(emit) {
-    if (emit === 'new') showForm.value = true
+    if (emit === 'new') {
+        if (!store.daySchedule?.is_working) return
+        showForm.value = true
+    }
 }
 
 function onApptClick(appt) {
@@ -195,6 +205,12 @@ function onStatusChanged() {
 function isSlotAvailable(slot) {
     const found = store.availableSlots.find(s => s.time === slot)
     return found?.available === true
+}
+
+function syncScroll() {
+    if (headerClients.value && timelineBody.value) {
+        headerClients.value.scrollLeft = timelineBody.value.scrollLeft
+    }
 }
 
 onMounted(() => store.fetchDay(date.value))
@@ -312,6 +328,10 @@ onMounted(() => store.fetchDay(date.value))
     width: 60px;
     flex-shrink: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: rgba(20, 30, 50, 0.7);
 }
 
 .day-timeline-header__clients {
@@ -325,8 +345,8 @@ onMounted(() => store.fetchDay(date.value))
     flex-direction: column;
     align-items: center;
     padding: 12px 8px;
-    min-width: 200px;
-    flex: 1;
+    width: 200px;
+    flex-shrink: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     gap: 4px;
 }
@@ -363,6 +383,10 @@ onMounted(() => store.fetchDay(date.value))
     width: 60px;
     flex-shrink: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: rgba(15, 25, 45, 0.85);
 }
 
 .day-timeline__hour {
@@ -379,11 +403,12 @@ onMounted(() => store.fetchDay(date.value))
 .day-timeline__clients {
     display: flex;
     flex: 1;
+    min-width: max-content;
 }
 
 .day-timeline__client-col {
-    min-width: 200px;
-    flex: 1;
+    width: 200px;
+    flex-shrink: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -396,6 +421,7 @@ onMounted(() => store.fetchDay(date.value))
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding: 2px 4px;
 }
+
 .day-slot--available {
     background: rgba(34, 197, 94, 0.08);
     border-left: 2px solid rgba(34, 197, 94, 0.3);
@@ -489,20 +515,47 @@ onMounted(() => store.fetchDay(date.value))
     }
 }
 
+/* ── Day off ── */
 .day-day-off {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 64px;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 1rem;
+    justify-content: center;
+    gap: 16px;
+    flex: 1;
+    padding: 48px 24px;
 }
 
-.day-day-off span {
+.day-day-off__icon-wrap {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.12);
+    border: 2px solid rgba(99, 102, 241, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 3rem;
+    color: rgba(165, 180, 252, 0.8);
 }
 
+.day-day-off__title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.day-day-off__reason {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-style: italic;
+    margin: 0;
+    text-align: center;
+    max-width: 320px;
+}
+
+/* ── Empty ── */
 .day-empty {
     display: flex;
     flex-direction: column;
@@ -516,62 +569,57 @@ onMounted(() => store.fetchDay(date.value))
     font-size: 3rem;
 }
 
-/* Agregar al final del <style scoped> en AppointmentDayView.vue */
-
+/* ── Mobile ── */
 @media (max-width: 767px) {
     .day-view__body {
         padding: 8px 12px 12px;
         gap: 8px;
     }
 
-    /* Filtro CM más compacto */
     .day-cm-filter {
         padding: 8px 12px;
         gap: 12px;
     }
+
     .day-cm-avatar {
-        width: 40px; height: 40px;
+        width: 40px;
+        height: 40px;
     }
+
     .day-cm-name {
         font-size: 0.68rem;
     }
 
-    /* Header clientes en fila */
     .day-col-header {
-        flex-direction: row;  /* ← fila en vez de columna */
-        padding: 8px 10px;
-        gap: 8px;
-        min-width: 160px;
-        align-items: center;
-        justify-content: flex-start;
-    }
-    .day-col-avatar {
-        width: 32px; height: 32px;
-        flex-shrink: 0;
-    }
-    .day-col-name {
-        font-size: 0.75rem;
-        text-align: left;
-    }
-    .day-col-count {
-        font-size: 0.62rem;
-        margin-left: auto;
+        width: 160px;
     }
 
-    /* Timeline header más compacto */
+    .day-timeline__client-col {
+        width: 160px;
+    }
+
     .day-timeline-header__spacer {
         width: 50px;
     }
+
     .day-timeline__hours {
         width: 50px;
     }
+
     .day-timeline__hour {
         font-size: 0.65rem;
     }
 
-    /* Citas más compactas */
-    .day-slot { height: 48px; }
-    .day-appt__client { font-size: 0.7rem; }
-    .day-appt__time   { font-size: 0.58rem; }
+    .day-slot {
+        height: 48px;
+    }
+
+    .day-appt__client {
+        font-size: 0.7rem;
+    }
+
+    .day-appt__time {
+        font-size: 0.58rem;
+    }
 }
 </style>

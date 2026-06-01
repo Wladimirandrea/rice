@@ -165,6 +165,8 @@
     "dayOff": "This day is not a working day",
     "taken": "Taken",
     "selectCMFirst": "Select a case manager first to see available slots",
-    "noSlots": "No available slots for this day"
+    "noSlots": "No available slots for this day",
+    "createdSuccess": "Appointment scheduled successfully!",
+    "emailSent": "A confirmation email has been sent."
   }
 }

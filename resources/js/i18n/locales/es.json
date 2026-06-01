@@ -169,7 +169,10 @@
     "dayOffConflict": "This time slot is not available due to a day off.",
     "nonWorkingDay": "Appointments cannot be scheduled on non-working days.",
     "cmConflict": "This case manager already has an appointment at this time.",
-    "clientConflict": "This client already has an appointment at this time."
+    "clientConflict": "This client already has an appointment at this time.",
+    "createdSuccess": "¡Cita agendada exitosamente!",
+    "emailSent": "Se envió un correo de confirmación."
+   
     
   }
 }
