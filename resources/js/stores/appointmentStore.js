@@ -108,16 +108,7 @@ export const useAppointmentStore = defineStore('appointment', () => {
             const alreadyExists = dayCaseManagers.value.some(cm => cm.id === newCM.id)
             if (!alreadyExists) dayCaseManagers.value.push(newCM)
 
-            // ✅ Notificación
-            const notifStore = useNotificationStore()
-            notifStore.add({
-                type: 'created',
-                clientName: data.appointment.client.name,
-                caseManagerName: data.appointment.case_manager.name,
-                date: data.appointment.date,
-                time: data.appointment.start_time,
-                status: data.appointment.status,
-            })
+            
 
             return { success: true, appointment: data.appointment }
         } catch (e) {
@@ -164,6 +155,24 @@ export const useAppointmentStore = defineStore('appointment', () => {
         }
     }
 
+    async function updateAppointment(id, payload) {
+        try {
+            const { data } = await api.put(`/admin/appointments/${id}`, payload)
+            const idx = dayAppointments.value.findIndex(a => a.id === id)
+            if (idx !== -1) {
+                dayAppointments.value[idx].start_time = data.appointment.start_time
+                dayAppointments.value[idx].end_time = data.appointment.end_time
+                dayAppointments.value[idx].date = data.appointment.date
+            }
+            return { success: true, appointment: data.appointment }
+        } catch (e) {
+            return {
+                success: false,
+                message: e.response?.data?.message ?? 'Error updating appointment',
+            }
+        }
+    }
+
     async function fetchSlots(date, caseManagerId) {
         if (!date || !caseManagerId) {
             formSlots.value = []
@@ -189,7 +198,7 @@ export const useAppointmentStore = defineStore('appointment', () => {
         fetchCalendar, prevMonth, nextMonth,
         dayAppointments, dayCaseManagers, selectedDate,
         loadingDay, selectedManager, daySchedule,
-        fetchDay, createAppointment, updateStatus,
+        fetchDay, createAppointment, updateStatus, updateAppointment,
         daysOff, availableSlots, formSlots, loadingSlots, fetchSlots,
     }
 })

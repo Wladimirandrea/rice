@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Events\AppointmentCreatedEvent;
 use App\Http\Controllers\Controller;
 use App\Mail\AppointmentCreatedMail;
 use App\Models\Appointment;
@@ -234,6 +235,9 @@ class AppointmentController extends Controller
         $appointment = Appointment::create($validated);
         $appointment->load('client:id,name,email,profile_image', 'caseManager:id,name,email,profile_image');
 
+        //enviar evento
+        broadcast(new AppointmentCreatedEvent($appointment));
+
         // Enviar emails
         $locale = $isEs ? 'es' : 'en';
         $devEmail = app()->environment('local') ? 'wladimirandrea2@gmail.com' : null;
@@ -287,6 +291,95 @@ class AppointmentController extends Controller
         $appointment->update($validated);
 
         return response()->json(['message' => 'Status updated successfully.']);
+    }
+
+
+
+    public function update(Request $request, Appointment $appointment): JsonResponse
+    {
+        abort_if(!auth()->user()->isAdmin(), 403);
+
+        $lang = $request->header('Accept-Language', 'en');
+        $isEs = str_contains($lang, 'es');
+
+        $validated = $request->validate([
+            'date'       => ['required', 'date'],
+            'start_time' => ['required', 'date_format:H:i'],
+        ]);
+
+        $validated['end_time'] = date('H:i', strtotime($validated['start_time']) + 1800);
+
+        // Verificar día no laborable
+        $dayOfWeek = (int) date('w', strtotime($validated['date']));
+        $schedule  = \App\Models\Schedule::where('day_of_week', $dayOfWeek)->first();
+
+        if (!$schedule?->is_working) {
+            return response()->json([
+                'message' => $isEs
+                    ? 'No se pueden agendar citas en días no laborables.'
+                    : 'Appointments cannot be scheduled on non-working days.',
+            ], 422);
+        }
+
+        // Verificar day off
+        $dayOff = \App\Models\DayOff::whereDate('date', $validated['date'])->first();
+        if ($dayOff) {
+            $dayOffStart = substr($dayOff->start_time, 0, 5);
+            $dayOffEnd   = substr($dayOff->end_time,   0, 5);
+            if ($validated['start_time'] >= $dayOffStart && $validated['start_time'] < $dayOffEnd) {
+                return response()->json([
+                    'message' => $isEs
+                        ? 'Este horario no está disponible debido a un día libre.'
+                        : 'This time slot is not available due to a day off.',
+                ], 422);
+            }
+        }
+
+        // Verificar conflicto por case manager (excluyendo la cita actual)
+        $cmConflict = Appointment::where('case_manager_id', $appointment->case_manager_id)
+            ->whereDate('date', $validated['date'])
+            ->where('start_time', $validated['start_time'] . ':00')
+            ->where('status', '!=', 'cancelled')
+            ->where('id', '!=', $appointment->id)
+            ->exists();
+
+        if ($cmConflict) {
+            return response()->json([
+                'message' => $isEs
+                    ? 'Este gestor ya tiene una cita a esta hora.'
+                    : 'This case manager already has an appointment at this time.',
+            ], 422);
+        }
+
+        // Verificar conflicto por cliente (excluyendo la cita actual)
+        $clientConflict = Appointment::where('client_id', $appointment->client_id)
+            ->whereDate('date', $validated['date'])
+            ->where('start_time', $validated['start_time'] . ':00')
+            ->where('status', '!=', 'cancelled')
+            ->where('id', '!=', $appointment->id)
+            ->exists();
+
+        if ($clientConflict) {
+            return response()->json([
+                'message' => $isEs
+                    ? 'Este cliente ya tiene una cita a esta hora.'
+                    : 'This client already has an appointment at this time.',
+            ], 422);
+        }
+
+        $appointment->update($validated);
+
+        return response()->json([
+            'message' => 'Appointment updated successfully.',
+            'appointment' => [
+                'id'         => $appointment->id,
+                'date'       => $appointment->date->format('Y-m-d'),
+                'start_time' => substr($appointment->start_time, 0, 5),
+                'end_time'   => substr($appointment->end_time,   0, 5),
+                'status'     => $appointment->status,
+                'notes'      => $appointment->notes,
+            ],
+        ]);
     }
 
     /**

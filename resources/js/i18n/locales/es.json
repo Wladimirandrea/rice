@@ -171,7 +171,8 @@
     "cmConflict": "This case manager already has an appointment at this time.",
     "clientConflict": "This client already has an appointment at this time.",
     "createdSuccess": "¡Cita agendada exitosamente!",
-    "emailSent": "Se envió un correo de confirmación."
+    "emailSent": "Se envió un correo de confirmación.",
+    "edit": "Editar cita"
   },
   "notifications": {
     "title": "Notificaciones",

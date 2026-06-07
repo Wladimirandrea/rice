@@ -1,18 +1,21 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notificationStore'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppNavbar from '@/components/layout/AppNavbar.vue'
 import AppBottomNav from '@/components/layout/AppBottomNav.vue'
 
-const auth = useAuthStore()
+const auth       = useAuthStore()
+const notifStore = useNotificationStore()
+
 const collapsed = ref(false)
 const navHidden = ref(false)
 
 const roleClass = computed(() => {
-    if (auth.isAdmin) return 'theme-admin'
+    if (auth.isAdmin)       return 'theme-admin'
     if (auth.isCaseManager) return 'theme-manager'
-    if (auth.isClient) return 'theme-client'
+    if (auth.isClient)      return 'theme-client'
     return ''
 })
 
@@ -23,6 +26,17 @@ function handleToggle() {
         collapsed.value = !collapsed.value
     }
 }
+
+onMounted(() => {
+    // Solo el admin se suscribe por ahora
+    if (auth.isAdmin) {
+        notifStore.subscribeReverb()
+    }
+})
+
+onUnmounted(() => {
+    notifStore.unsubscribeReverb()
+})
 </script>
 
 <template>

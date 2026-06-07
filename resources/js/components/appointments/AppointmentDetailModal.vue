@@ -4,15 +4,59 @@
         <Transition name="modal-fade">
             <div v-if="modelValue" class="ad-backdrop" @click.self="$emit('update:modelValue', false)">
                 <div class="ad-modal">
+
+                    <!-- Header -->
                     <div class="ad-header" :class="`ad-header--${appointment?.status}`">
                         <div class="ad-header__info">
                             <span class="ad-header__status">{{ $t(`appointments.${appointment?.status}`) }}</span>
                             <span class="ad-header__time">{{ appointment?.start_time }} — {{ appointment?.end_time }}</span>
                         </div>
-                        <button class="ad-close" @click="$emit('update:modelValue', false)">✕</button>
+                        <div class="ad-header__actions">
+                            <button class="ad-edit-btn" @click="toggleEdit" :title="$t('common.edit')">
+                                <i :class="editMode ? 'fa fa-times' : 'fa fa-pen'"></i>
+                            </button>
+                            <button class="ad-close" @click="$emit('update:modelValue', false)">✕</button>
+                        </div>
                     </div>
 
                     <div class="ad-body">
+
+                        <!-- Edit form -->
+                        <Transition name="slide-down">
+                            <div v-if="editMode" class="ad-edit-form">
+                                <!-- Fecha -->
+                                <div class="ad-edit-field">
+                                    <label class="ad-edit-label">{{ $t('appointments.date') }}</label>
+                                    <input v-model="editForm.date" type="date" class="ad-edit-input" />
+                                </div>
+
+                                <!-- Hora -->
+                                <div class="ad-edit-field">
+                                    <label class="ad-edit-label">{{ $t('appointments.startTime') }}</label>
+                                    <div v-if="loadingEditSlots" class="ad-slots-loading">
+                                        <span class="ad-spinner" /> {{ $t('common.loading') }}
+                                    </div>
+                                    <select v-else v-model="editForm.start_time" class="ad-edit-input">
+                                        <option
+                                            v-for="slot in editSlots"
+                                            :key="slot.time"
+                                            :value="slot.time"
+                                            :disabled="!slot.available"
+                                        >
+                                            {{ slot.time }}{{ !slot.available ? ' —  ' + $t('appointments.taken') : '' }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <p v-if="editError" class="ad-edit-error">{{ editError }}</p>
+
+                                <button class="ad-edit-save" :disabled="saving" @click="saveEdit">
+                                    <span v-if="saving" class="ad-spinner" />
+                                    <span v-else>{{ $t('common.save') }}</span>
+                                </button>
+                            </div>
+                        </Transition>
+
                         <!-- Cliente -->
                         <div class="ad-person">
                             <img :src="appointment?.client?.profile_image || defaultAvatar" class="ad-person__avatar" />
@@ -53,6 +97,7 @@
                                 </button>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -61,19 +106,96 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useAppointmentStore } from '@/stores/appointmentStore'
+import api from '@/plugins/axios'
 
 const store = useAppointmentStore()
 const defaultAvatar = 'https://ui-avatars.com/api/?name=C&background=1565c0&color=fff'
-const saving  = ref(false)
+const saving   = ref(false)
 const statuses = ['pending', 'confirmed', 'completed', 'cancelled']
+
+// Edit
+const editMode         = ref(false)
+const editError        = ref('')
+const editSlots        = ref([])
+const loadingEditSlots = ref(false)
+const editForm = ref({ date: '', start_time: '' })
 
 const props = defineProps({
     modelValue:  Boolean,
     appointment: { type: Object, default: null },
 })
-const emit = defineEmits(['update:modelValue', 'status-changed'])
+const emit = defineEmits(['update:modelValue', 'status-changed', 'updated'])
+
+// Cuando abre el modal, pre-llenar el form
+watch(() => props.appointment, (appt) => {
+    if (appt) {
+        editForm.value.date       = appt.date
+        editForm.value.start_time = appt.start_time
+    }
+})
+
+// Cuando cambia la fecha en edit, cargar slots
+watch(() => editForm.value.date, async (date) => {
+    if (!date || !props.appointment) return
+    loadingEditSlots.value = true
+    try {
+        const { data } = await api.get('/admin/appointments/slots', {
+            params: { date, case_manager_id: props.appointment.case_manager.id }
+        })
+        // Incluir el slot actual como disponible aunque esté ocupado
+        editSlots.value = (data.slots ?? []).map(s => ({
+            ...s,
+            available: s.available || s.time === props.appointment.start_time,
+        }))
+    } catch {
+        editSlots.value = []
+    } finally {
+        loadingEditSlots.value = false
+    }
+})
+
+function toggleEdit() {
+    editMode.value  = !editMode.value
+    editError.value = ''
+    if (editMode.value && props.appointment) {
+        editForm.value.date       = props.appointment.date
+        editForm.value.start_time = props.appointment.start_time
+    }
+}
+
+async function saveEdit() {
+    editError.value = ''
+    if (!editForm.value.date || !editForm.value.start_time) {
+        editError.value = 'Please fill all fields'
+        return
+    }
+    saving.value = true
+    try {
+        const { data } = await api.put(`/admin/appointments/${props.appointment.id}`, {
+            date:       editForm.value.date,
+            start_time: editForm.value.start_time,
+        })
+        // Actualizar en el store
+        const idx = store.dayAppointments.findIndex(a => a.id === props.appointment.id)
+        if (idx !== -1) {
+            store.dayAppointments[idx] = {
+                ...store.dayAppointments[idx],
+                date:       data.appointment.date,
+                start_time: data.appointment.start_time,
+                end_time:   data.appointment.end_time,
+            }
+            store.dayAppointments.sort((a, b) => a.start_time.localeCompare(b.start_time))
+        }
+        editMode.value = false
+        emit('updated', data.appointment)
+    } catch (e) {
+        editError.value = e.response?.data?.message ?? 'Error updating appointment'
+    } finally {
+        saving.value = false
+    }
+}
 
 async function changeStatus(status) {
     saving.value = true
@@ -110,10 +232,18 @@ async function changeStatus(status) {
 .ad-header__info { display: flex; flex-direction: column; gap: 2px; }
 .ad-header__status { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; }
 .ad-header__time   { font-size: 1rem; font-weight: 700; color: #fff; }
-.ad-close {
+
+/* ✅ Fix: punto faltante */
+.ad-header__actions { display: flex; align-items: center; gap: 8px; }
+
+.ad-close, .ad-edit-btn {
     background: rgba(255,255,255,0.1); border: none; color: #fff;
-    width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 0.85rem;
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    font-size: 0.82rem; transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center;
 }
+.ad-close:hover, .ad-edit-btn:hover { background: rgba(255,255,255,0.25); }
+
 .ad-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 16px; }
 .ad-person {
     display: flex; align-items: center; gap: 14px;
@@ -144,4 +274,50 @@ async function changeStatus(status) {
 .ad-status-btn--confirmed { background: #3b82f6; color: #fff; }
 .ad-status-btn--completed { background: #22c55e; color: #fff; }
 .ad-status-btn--cancelled { background: #ef4444; color: #fff; }
+
+/* Edit form */
+.ad-edit-form {
+    background: rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; flex-direction: column; gap: 12px;
+}
+.ad-edit-field  { display: flex; flex-direction: column; gap: 6px; }
+.ad-edit-label  { font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.04em; }
+.ad-edit-input  {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: #fff;
+    font-size: 0.85rem; padding: 8px 12px;
+    outline: none; width: 100%;
+    font-family: 'Segoe UI', sans-serif;
+    transition: border-color 0.2s;
+}
+.ad-edit-input:focus { border-color: #3b82f6; }
+.ad-edit-input::-webkit-calendar-picker-indicator { filter: invert(1); }
+.ad-edit-input option { background: #1a2a4a; }
+.ad-edit-error  { color: #fca5a5; font-size: 0.78rem; text-align: center; margin: 0; }
+.ad-edit-save   {
+    background: #3b82f6; border: none; color: #fff;
+    padding: 9px; border-radius: 10px; font-size: 0.88rem;
+    font-weight: 700; cursor: pointer; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: filter 0.2s;
+}
+.ad-edit-save:hover:not(:disabled) { filter: brightness(1.1); }
+.ad-edit-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.ad-slots-loading { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.5); font-size: 0.85rem; padding: 8px 0; }
+
+.ad-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff; border-radius: 50%;
+    animation: ad-spin 0.7s linear infinite; display: inline-block;
+}
+@keyframes ad-spin { to { transform: rotate(360deg); } }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.25s, transform 0.25s; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; transform: scale(0.96); }
+.slide-down-enter-active, .slide-down-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-8px); }
 </style>

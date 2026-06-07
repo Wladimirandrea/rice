@@ -103,7 +103,7 @@
         </div>
 
         <AppointmentFormModal v-model="showForm" :date="date" @created="onCreated" />
-        <AppointmentDetailModal v-model="showDetail" :appointment="selectedAppt" @status-changed="onStatusChanged" />
+        <AppointmentDetailModal v-model="showDetail" :appointment="selectedAppt" @status-changed="onStatusChanged" @appointment-updated="onAppointmentUpdated" />
     </div>
 </template>
 
@@ -211,6 +211,17 @@ function syncScroll() {
     if (headerClients.value && timelineBody.value) {
         headerClients.value.scrollLeft = timelineBody.value.scrollLeft
     }
+}
+function onAppointmentUpdated(updated) {
+    // Actualizar la cita seleccionada
+    const idx = store.dayAppointments.findIndex(a => a.id === updated.id)
+    if (idx !== -1) {
+        store.dayAppointments[idx].start_time = updated.start_time
+        store.dayAppointments[idx].end_time   = updated.end_time
+        store.dayAppointments[idx].date       = updated.date
+    }
+    selectedAppt.value = { ...selectedAppt.value, ...updated }
+    showDetail.value   = false
 }
 
 onMounted(() => store.fetchDay(date.value))

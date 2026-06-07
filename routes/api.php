@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::get('/appointments/calendar',              [AppointmentController::class, 'calendar']);
     Route::get('/appointments/day',                   [AppointmentController::class, 'day']);
     Route::post('/appointments',                      [AppointmentController::class, 'store']);
+    Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
     Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus']);
     Route::get('/appointments/slots', [AppointmentController::class, 'slots']);
 
