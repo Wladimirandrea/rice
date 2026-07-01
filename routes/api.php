@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\Admin\CaseManagerController;
 use App\Http\Controllers\Api\Admin\DayOffController;
 use App\Http\Controllers\Api\Admin\ScheduleController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Manager\ManagerAppointmentController;
+use App\Http\Controllers\Api\Manager\ManagerClientController;
 use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
@@ -62,12 +64,21 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
     Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus']);
     Route::get('/appointments/slots', [AppointmentController::class, 'slots']);
-
-    
 });
 
-Route::middleware(['auth:sanctum', 'role:admin,case_manager'])->prefix('manager')->group(function () {
-    // Route::get('/clients', ...);
+Route::middleware(['auth:sanctum', 'role:case_manager'])->prefix('manager')->group(function () {
+    Route::get('/clients', [ManagerClientController::class, 'index']);
+    Route::get('/clients/{client}', [ManagerClientController::class, 'show']);
+    Route::patch('/clients/{client}/password', [ManagerClientController::class, 'changePassword']);
+
+    Route::get('/appointments/calendar', [ManagerAppointmentController::class, 'calendar']);
+    Route::get('/appointments/day',      [ManagerAppointmentController::class, 'day']);
+    Route::get('/appointments/slots',    [ManagerAppointmentController::class, 'slots']);
+    Route::post('/appointments',         [ManagerAppointmentController::class, 'store']);
+    Route::patch('/appointments/{appointment}/status', [ManagerAppointmentController::class, 'updateStatus']);
+    Route::put('/appointments/{appointment}',          [ManagerAppointmentController::class, 'update']);
+    
+    
 });
 
 Route::middleware(['auth:sanctum', 'role:client'])->prefix('client')->group(function () {

@@ -64,6 +64,7 @@ export const useNotificationStore = defineStore('notifications', () => {
     function subscribeReverb() {
         if (subscribed) return
         subscribed = true
+        console.log('🔔 Suscribiendo al canal appointments...')
 
         echo
             .channel('appointments')

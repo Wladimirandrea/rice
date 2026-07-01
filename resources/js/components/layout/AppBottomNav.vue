@@ -4,34 +4,34 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 
-const { t }  = useI18n()
+const { t } = useI18n()
 const router = useRouter()
-const auth   = useAuthStore()
+const auth = useAuthStore()
 
-const activeIndex    = ref(0)
-const menuRef        = ref(null)
+const activeIndex = ref(0)
+const menuRef = ref(null)
 const menuBorderLeft = ref('0px')
 
 const adminItems = computed(() => [
-    { label: t('nav.home'),     icon: 'fa-house',         route: 'admin.dashboard', color: '#4a90e2' },
-    { label: t('nav.users'),    icon: 'fa-users',         route: 'admin.users',     color: '#2dd4bf' },
-    { label: t('nav.caseManagers'), icon: 'fa-user-tie',      route: 'admin.case-managers',  color: '#a78bfa' },
-    { label: t('nav.schedule'), icon: 'fa-calendar', route: 'admin.schedule',  color: '#a78bfa' },
-    { label: t('nav.appointments'), icon: 'fa-calendar-check', route: 'admin.appointments',  color: '#fb923c' },
-    
+    { label: t('nav.home'), icon: 'fa-house', route: 'admin.dashboard', color: '#4a90e2' },
+    { label: t('nav.users'), icon: 'fa-users', route: 'admin.users', color: '#2dd4bf' },
+    { label: t('nav.caseManagers'), icon: 'fa-user-tie', route: 'admin.case-managers', color: '#a78bfa' },
+    { label: t('nav.schedule'), icon: 'fa-calendar', route: 'admin.schedule', color: '#a78bfa' },
+    { label: t('nav.appointments'), icon: 'fa-calendar-check', route: 'admin.appointments', color: '#fb923c' },
+
 ])
 
 const managerItems = computed(() => [
-    { label: t('nav.home'),     icon: 'fa-house',         route: 'manager.dashboard', color: '#4a90e2' },
-    { label: t('nav.clients'),  icon: 'fa-users',         route: 'manager.clients',   color: '#2dd4bf' },
-    { label: t('nav.profile'),  icon: 'fa-user-tie',      route: 'manager.dashboard', color: '#a78bfa' },
-    { label: t('nav.calendar'), icon: 'fa-calendar-days', route: 'manager.calendar',  color: '#fb923c' },
+    { label: t('nav.home'),         icon: 'fa-house',          route: 'manager.dashboard',    color: '#4a90e2' },
+    { label: t('nav.clients'),      icon: 'fa-users',           route: 'manager.clients',      color: '#2dd4bf' },
+    { label: t('nav.appointments'), icon: 'fa-calendar-check',  route: 'manager.appointments', color: '#a78bfa' },
+    { label: t('nav.calendar'),     icon: 'fa-calendar',        route: 'manager.calendar',     color: '#fb923c' },
 ])
 
 const clientItems = computed(() => [
-    { label: t('nav.home'),     icon: 'fa-house',          route: 'client.dashboard',    color: '#4a90e2' },
+    { label: t('nav.home'), icon: 'fa-house', route: 'client.dashboard', color: '#4a90e2' },
     { label: t('nav.schedule'), icon: 'fa-calendar-check', route: 'client.appointments', color: '#2dd4bf' },
-    { label: t('nav.profile'),  icon: 'fa-user-tie',       route: 'client.dashboard',    color: '#a78bfa' },
+    { label: t('nav.profile'), icon: 'fa-user-tie', route: 'client.dashboard', color: '#a78bfa' },
 ])
 
 const items = computed(() =>
@@ -43,13 +43,13 @@ function updateBorder(index) {
         if (!menuRef.value) return
         const menuItems = menuRef.value.querySelectorAll('.menu_item')
         if (!menuItems[index]) return
-        const item        = menuItems[index]
-        const menu        = menuRef.value
-        const itemRect    = item.getBoundingClientRect()
-        const menuRect    = menu.getBoundingClientRect()
-        const fontSize    = parseFloat(getComputedStyle(menu).fontSize)
+        const item = menuItems[index]
+        const menu = menuRef.value
+        const itemRect = item.getBoundingClientRect()
+        const menuRect = menu.getBoundingClientRect()
+        const fontSize = parseFloat(getComputedStyle(menu).fontSize)
         const borderWidth = 10.9 * fontSize
-        const left        = itemRect.left - menuRect.left + itemRect.width / 2 - borderWidth / 2
+        const left = itemRect.left - menuRect.left + itemRect.width / 2 - borderWidth / 2
         menuBorderLeft.value = `${left}px`
     })
 }
@@ -77,14 +77,9 @@ onUnmounted(() => {
 <template>
     <div class="bottom-nav">
         <menu class="menu" ref="menuRef">
-            <button
-                v-for="(item, index) in items"
-                :key="index"
-                class="menu_item"
+            <button v-for="(item, index) in items" :key="index" class="menu_item"
                 :class="{ active: activeIndex === index }"
-                :style="activeIndex === index ? `--bgColorItem: ${item.color}` : ''"
-                @click="clickItem(index)"
-            >
+                :style="activeIndex === index ? `--bgColorItem: ${item.color}` : ''" @click="clickItem(index)">
                 <i :class="['fa-solid', item.icon]" style="color: white;"></i>
                 <span class="menu_label">{{ item.label }}</span>
             </button>
@@ -113,6 +108,7 @@ onUnmounted(() => {
     border-top: 1px solid #1e2a3a;
     padding: 6px 0 10px;
 }
+
 .menu {
     margin: 0;
     display: flex;
@@ -129,6 +125,7 @@ onUnmounted(() => {
     --duration: 0.5s;
     --bgColorItem: #4a90e2;
 }
+
 .menu_item {
     all: unset;
     flex-grow: 1;
@@ -145,6 +142,7 @@ onUnmounted(() => {
     padding: 1em 0 0.15em;
     transition: transform var(--duration);
 }
+
 .menu_item::before {
     content: "";
     z-index: -1;
@@ -156,16 +154,28 @@ onUnmounted(() => {
     transition: transform var(--duration);
     top: 0;
 }
-.menu_item.active { transform: translate3d(0, -0.8em, 0); }
-.menu_item.active::before { transform: scale(1); background-color: var(--bgColorItem); }
+
+.menu_item.active {
+    transform: translate3d(0, -0.8em, 0);
+}
+
+.menu_item.active::before {
+    transform: scale(1);
+    background-color: var(--bgColorItem);
+}
+
 .menu_label {
     font-size: 12px;
-    color: rgba(255,255,255,0.45);
+    color: rgba(255, 255, 255, 0.45);
     white-space: nowrap;
     margin-top: 6px;
     line-height: 1;
 }
-.menu_item.active .menu_label { color: rgba(255,255,255,0.9); }
+
+.menu_item.active .menu_label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
 .menu_border {
     left: 0;
     bottom: 99%;
@@ -177,9 +187,15 @@ onUnmounted(() => {
     background-color: #131c2e;
     transition: transform var(--duration);
 }
-.svg-container { width: 0; height: 0; }
+
+.svg-container {
+    width: 0;
+    height: 0;
+}
 
 @media (min-width: 768px) {
-    .bottom-nav { display: none; }
+    .bottom-nav {
+        display: none;
+    }
 }
 </style>

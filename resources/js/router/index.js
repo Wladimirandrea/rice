@@ -59,6 +59,10 @@ const routes = [
         meta: { requiresAuth: true, roles: ['case_manager'] },
         children: [
             { path: 'dashboard', name: 'manager.dashboard', component: ManagerDashboard },
+            { path: 'clients', name: 'manager.clients', component: () => import('@/views/manager/ClientsView.vue') },
+            { path: 'appointments', name: 'manager.appointments', component: () => import('@/views/manager/ManagerCalendarView.vue'), meta: { requiresAuth: true, role: 'case_manager' },
+            },
+            { path: 'appointments/:date', name: 'manager.appointments.day', component: () => import('@/views/manager/ManagerAppointmentDayView.vue'), meta: { requiresAuth: true, role: 'case_manager' },},
         ],
     },
     {

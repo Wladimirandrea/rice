@@ -5,6 +5,7 @@ import { useNotificationStore } from '@/stores/notificationStore'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import AppNavbar from '@/components/layout/AppNavbar.vue'
 import AppBottomNav from '@/components/layout/AppBottomNav.vue'
+import ToastContainer from '@/components/layout/ToastContainer.vue'
 
 const auth       = useAuthStore()
 const notifStore = useNotificationStore()
@@ -28,8 +29,8 @@ function handleToggle() {
 }
 
 onMounted(() => {
-    // Solo el admin se suscribe por ahora
-    if (auth.isAdmin) {
+    // Admin y case manager reciben notificaciones de citas en tiempo real
+    if (auth.isAdmin || auth.isCaseManager) {
         notifStore.subscribeReverb()
     }
 })
@@ -47,6 +48,7 @@ onUnmounted(() => {
             <RouterView />
         </main>
         <AppBottomNav />
+        <ToastContainer />
     </div>
 </template>
 

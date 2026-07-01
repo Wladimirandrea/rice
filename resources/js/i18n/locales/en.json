@@ -181,5 +181,17 @@
     "minsAgo": "m ago",
     "hoursAgo": "h ago",
     "daysAgo": "d ago"
+  },
+  "managerClients": {
+    "title": "Clients",
+    "searchPlaceholder": "Search by name or email...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "totalAppts": "Total appointments",
+    "pending": "Pending",
+    "since": "Since",
+    "changePassword": "Change password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password"
   }
 }

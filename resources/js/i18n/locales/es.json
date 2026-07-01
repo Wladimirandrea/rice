@@ -185,5 +185,17 @@
     "minsAgo": "min",
     "hoursAgo": "h",
     "daysAgo": "d"
+  },
+  "managerClients": {
+    "title": "Clientes",
+    "searchPlaceholder": "Buscar por nombre o correo...",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "totalAppts": "Citas totales",
+    "pending": "Pendiente",
+    "since": "Desde",
+    "changePassword": "Cambiar contraseña",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña"
   }
 }
