@@ -1,6 +1,8 @@
+// resources/js/stores/notificationStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import echo from '@/plugins/echo'
+import { useAuthStore } from '@/stores/auth'
 
 export const useNotificationStore = defineStore('notifications', () => {
     const stored = localStorage.getItem('app_notifications')
@@ -22,7 +24,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         try {
             const audio = new Audio('/sounds/notification.mp3')
             audio.volume = 0.6
-            audio.play().catch(() => {}) // silenciar error si el navegador bloquea
+            audio.play().catch(() => {})
         } catch (_) {}
     }
 
@@ -58,34 +60,65 @@ export const useNotificationStore = defineStore('notifications', () => {
         save()
     }
 
-    // ── Suscripción Reverb ──────────────────────────────────
+    // ── Handler compartido del evento ───────────────────────
+    function handleAppointmentCreated(data) {
+        const appt = data.appointment ?? data
+        add({
+            type:            'created',
+            clientName:      appt.client?.name        ?? '—',
+            caseManagerName: appt.case_manager?.name  ?? '—',
+            date:            appt.date                ?? '—',
+            time:            appt.start_time          ?? '—',
+            status:          appt.status              ?? 'pending',
+        })
+    }
+
+    // ── Suscripción Reverb por rol ──────────────────────────
     let subscribed = false
 
     function subscribeReverb() {
         if (subscribed) return
         subscribed = true
-        console.log('🔔 Suscribiendo al canal appointments...')
 
-        echo
-            .channel('appointments')
-            .listen('.appointment.created', (data) => {
-                // El payload viene dentro de data directamente
-                // broadcastAs() lo mete en el nivel raíz
-                const appt = data.appointment ?? data
+        const auth = useAuthStore()
+        const user = auth.user
 
-                add({
-                    type:            'created',
-                    clientName:      appt.client?.name        ?? '—',
-                    caseManagerName: appt.case_manager?.name  ?? '—',
-                    date:            appt.date                ?? '—',
-                    time:            appt.start_time          ?? '—',
-                    status:          appt.status              ?? 'pending',
-                })
-            })
+        if (!user) return
+
+        if (user.role === 'admin') {
+            // Admin escucha el canal público con todas las citas
+            echo
+                .channel('appointments')
+                .listen('.appointment.created', handleAppointmentCreated)
+
+        } else if (user.role === 'case_manager') {
+            // Manager solo escucha sus propias citas
+            echo
+                .private(`manager.${user.id}`)
+                .listen('.appointment.created', handleAppointmentCreated)
+
+        } else if (user.role === 'client') {
+            // Cliente solo escucha sus propias citas
+            echo
+                .private(`client.${user.id}`)
+                .listen('.appointment.created', handleAppointmentCreated)
+        }
     }
 
     function unsubscribeReverb() {
-        echo.leaveChannel('appointments')
+        const auth = useAuthStore()
+        const user = auth.user
+
+        if (!user) return
+
+        if (user.role === 'admin') {
+            echo.leaveChannel('appointments')
+        } else if (user.role === 'case_manager') {
+            echo.leaveChannel(`private-manager.${user.id}`)
+        } else if (user.role === 'client') {
+            echo.leaveChannel(`private-client.${user.id}`)
+        }
+
         subscribed = false
     }
 

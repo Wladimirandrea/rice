@@ -93,7 +93,7 @@ function onAppointmentCreated() {
 onMounted(async () => {
     await store.fetchClients()
     await store.fetchCalendar()
-    console.log('primer cliente:', JSON.stringify(store.myClients[0]))
+    
 })
 </script>
 

@@ -43,6 +43,49 @@ class UserSeeder extends Seeder
             'profile_image' => 'profile-images/chavo.png',
         ]);
 
+        // ── Cliente ────────────────────────────────────────────
+        User::create([
+            'name'       => 'chilindrina',
+            'email'      => 'chilindrina@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/chilindrina.png',
+        ]);
+
+        // ── Cliente ────────────────────────────────────────────
+        User::create([
+            'name'       => 'quiko',
+            'email'      => 'quiko@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/quiko.png',
+        ]);
+        // ── Cliente ────────────────────────────────────────────
+        User::create([
+            'name'       => 'bruja',
+            'email'      => 'bruja@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/bruja.png',
+        ]);
+        // ── Cliente ────────────────────────────────────────────
+        User::create([
+            'name'       => 'donaflorinda',
+            'email'      => 'donaflorinda@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/florinda.png',
+        ]);
+
+
         // ── Case Manager 2 ───────────────────────────────────────
         $manager = User::create([
             'name'       => 'Homero Simpson',
@@ -63,7 +106,7 @@ class UserSeeder extends Seeder
             'is_active'  => true,
             'created_by' => $manager->id,
             'profile_image' => 'profile-images/lisa.png',
-        ]); 
+        ]);
         // ── Cliente ────────────────────────────────────────────
         User::create([
             'name'       => 'bart simpson',
@@ -74,5 +117,88 @@ class UserSeeder extends Seeder
             'created_by' => $manager->id,
             'profile_image' => 'profile-images/bart.png',
         ]);
+
+         User::create([
+            'name'       => 'marge simpson',
+            'email'      => 'marge@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/marge.png',
+        ]);
+         User::create([
+            'name'       => 'maggie simpson',
+            'email'      => 'maggie@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/maggie.png',
+        ]);
+         User::create([
+            'name'       => 'juan Topo',
+            'email'      => 'juantopo@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/juan.png',
+        ]);
+
+
+        // ── Case Manager 3 ───────────────────────────────────────
+        $manager = User::create([
+            'name'       => 'Ned stark',
+            'email'      => 'nedstark@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'case_manager',
+            'is_active'  => true,
+            'created_by' => $admin->id,
+            'profile_image' => 'profile-images/ned.png',
+        ]);
+
+        // ── Cliente ────────────────────────────────────────────
+        User::create([
+            'name'       => 'Arya stark',
+            'email'      => 'arya@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/arya.png',
+        ]);
+        // ── Cliente ────────────────────────────────────────────
+        User::create([
+            'name'       => 'sansa stark',
+            'email'      => 'sansa@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/sansa.png',
+        ]);
+
+         User::create([
+            'name'       => 'bran stark',
+            'email'      => 'bran@sistema.com',
+            'password'   => bcrypt('123456789'),
+            'role'       => 'client',
+            'is_active'  => true,
+            'created_by' => $manager->id,
+            'profile_image' => 'profile-images/bran.png',
+        ]);
+         
+
+
+
+
+
+
+
+
+
+
+
     }
 }

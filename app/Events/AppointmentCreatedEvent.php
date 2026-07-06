@@ -1,10 +1,12 @@
 <?php
+// app/Events/AppointmentCreatedEvent.php
 
 namespace App\Events;
 
 use App\Models\Appointment;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -15,7 +17,6 @@ class AppointmentCreatedEvent implements ShouldBroadcastNow
 
     public function __construct(public Appointment $appointment)
     {
-        // Cargar relaciones necesarias
         $this->appointment->loadMissing(
             'client:id,name',
             'caseManager:id,name'
@@ -24,7 +25,16 @@ class AppointmentCreatedEvent implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        return [new Channel('appointments')];
+        return [
+            // Admin escucha todas las citas en el canal público
+            new Channel('appointments'),
+
+            // Case manager solo ve las citas de sus clientes
+            new PrivateChannel('manager.' . $this->appointment->case_manager_id),
+
+            // Cliente solo ve sus propias citas
+            new PrivateChannel('client.' . $this->appointment->client_id),
+        ];
     }
 
     public function broadcastAs(): string
@@ -32,9 +42,6 @@ class AppointmentCreatedEvent implements ShouldBroadcastNow
         return 'appointment.created';
     }
 
-    /**
-     * Datos que se envían al canal — estructura explícita
-     */
     public function broadcastWith(): array
     {
         return [
