@@ -40,7 +40,7 @@
                 <p>{{ $t('appointments.noAppointments') }}</p>
             </div>
 
-            <!-- Timeline -->
+            <!-- Timeline (desktop/tablet) -->
             <div v-else class="day-timeline-wrapper">
                 <div class="day-timeline-header">
                     <div class="day-timeline-header__spacer" />
@@ -83,6 +83,29 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Lista de citas (mobile) -->
+            <div
+                v-if="!store.loadingDay && store.daySchedule?.is_working && !store.isDayOff && store.dayAppointments.length > 0"
+                class="day-mobile-list"
+            >
+                <div
+                    v-for="appt in sortedAppointments"
+                    :key="appt.id"
+                    class="day-mobile-card"
+                    :class="`day-mobile-card--${appt.status}`"
+                    @click="onApptClick(appt)"
+                >
+                    <img :src="appt.client.profile_image || defaultAvatar" :alt="appt.client.name" class="day-mobile-card__avatar" />
+                    <div class="day-mobile-card__info">
+                        <span class="day-mobile-card__name">{{ appt.client.name }}</span>
+                        <span class="day-mobile-card__time">{{ appt.start_time }} — {{ appt.end_time }}</span>
+                    </div>
+                    <button type="button" class="day-mobile-card__edit" @click.stop="onApptClick(appt)">
+                        <i class="fa-solid fa-pen" />
+                    </button>
                 </div>
             </div>
         </div>
@@ -148,6 +171,10 @@ const uniqueClients = computed(() => {
     const map = new Map()
     store.dayAppointments.forEach(a => { if (!map.has(a.client.id)) map.set(a.client.id, a.client) })
     return Array.from(map.values())
+})
+
+const sortedAppointments = computed(() => {
+    return [...store.dayAppointments].sort((a, b) => a.start_time.localeCompare(b.start_time))
 })
 
 function clientAppts(clientId) {
@@ -220,6 +247,86 @@ onMounted(() => store.fetchDay(date.value))
 .day-day-off-card__title  { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0; }
 .day-day-off-card__reason { font-size: 0.9rem; color: rgba(255,255,255,0.7); margin: 0; }
 .day-day-off-card__time   { font-size: 0.82rem; color: rgba(239,68,68,0.9); font-weight: 600; margin: 0; }
+
+/* ── Lista mobile (tarjetas) ── */
+.day-mobile-list {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+    padding-bottom: 8px;
+}
+
+.day-mobile-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.15s;
+}
+
+.day-mobile-card:active { transform: scale(0.98); }
+.day-mobile-card:hover  { filter: brightness(1.05); }
+
+.day-mobile-card--pending   { background: #d9962f; }
+.day-mobile-card--confirmed { background: #3b82f6; }
+.day-mobile-card--completed { background: #22c55e; }
+.day-mobile-card--cancelled { background: #e05c5c; }
+
+.day-mobile-card__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.day-mobile-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.day-mobile-card__name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.day-mobile-card__time {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+}
+
+.day-mobile-card__edit {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.day-mobile-card__edit:hover { background: rgba(255, 255, 255, 0.4); }
+
 @media (max-width: 767px) {
     .day-view__body { padding: 8px 12px 12px; gap: 8px; }
     .day-col-header { flex-direction: row; padding: 8px 10px; gap: 8px; min-width: 160px; align-items: center; justify-content: flex-start; }
@@ -230,5 +337,9 @@ onMounted(() => store.fetchDay(date.value))
     .day-timeline__hours { width: 50px; }
     .day-timeline__hour  { font-size: 0.65rem; }
     .day-slot { height: 48px; }
+
+    /* En mobile ocultamos el timeline por horas y mostramos la lista de tarjetas */
+    .day-timeline-wrapper { display: none; }
+    .day-mobile-list { display: flex; }
 }
 </style>
