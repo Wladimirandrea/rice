@@ -185,6 +185,8 @@
   "managerClients": {
     "title": "Clients",
     "searchPlaceholder": "Search by name or email...",
+    "noClients": "No clients found",
+    "noClientsDesc": "There are no clients assigned yet",
     "active": "Active",
     "inactive": "Inactive",
     "totalAppts": "Total appointments",

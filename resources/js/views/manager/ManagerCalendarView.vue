@@ -98,19 +98,28 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.mc-view { display: flex; flex-direction: column; height: 100%; }
+.mc-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
 .mc-view__body {
-    flex: 1; overflow-y: auto;
-    padding: 16px 24px 24px;
-    display: flex; flex-direction: column; gap: 16px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
 }
 
 /* Filtro clientes */
 .mc-client-filter {
-    display: flex; gap: 16px; align-items: center;
-    padding: 12px 16px;
+    display: flex; gap: 14px; align-items: center;
+    padding: 10px 14px;
     background: rgba(255,255,255,0.05);
-    border-radius: 16px;
+    border-radius: 15px;
     border: 1px solid rgba(255,255,255,0.1);
     overflow-x: auto; flex-shrink: 0;
 }
@@ -122,7 +131,7 @@ onMounted(async () => {
 .mc-client-item--active { opacity: 1; }
 .mc-client-item:hover   { opacity: 0.9; transform: translateY(-2px); }
 .mc-client-avatar {
-    width: 52px; height: 52px; border-radius: 50%; overflow: hidden;
+    width: 46px; height: 46px; border-radius: 50%; overflow: hidden;
     border: 2px solid rgba(255,255,255,0.2); transition: border-color 0.2s;
 }
 .mc-client-item--active .mc-client-avatar { border-color: #3b82f6; }
@@ -130,11 +139,11 @@ onMounted(async () => {
 .mc-client-avatar--all {
     background: rgba(255,255,255,0.15);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; color: #fff;
+    font-size: 1.1rem; color: #fff;
 }
-.mc-client-name { font-size: 0.75rem; color: rgba(255,255,255,0.8); font-weight: 600; }
+.mc-client-name { font-size: 0.72rem; color: rgba(255,255,255,0.8); font-weight: 600; }
 
 @media (max-width: 767px) {
-    .mc-view__body { padding: 12px; }
+    .mc-view__body { padding: 10px; }
 }
 </style>

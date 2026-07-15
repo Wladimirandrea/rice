@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/plugins/axios'
-import { useNotificationStore } from '@/stores/notificationStore'
+
 
 export const useAppointmentStore = defineStore('appointment', () => {
     // ── Calendar ──────────────────────────────────────────
@@ -108,7 +108,7 @@ export const useAppointmentStore = defineStore('appointment', () => {
             const alreadyExists = dayCaseManagers.value.some(cm => cm.id === newCM.id)
             if (!alreadyExists) dayCaseManagers.value.push(newCM)
 
-            
+
 
             return { success: true, appointment: data.appointment }
         } catch (e) {
@@ -122,12 +122,19 @@ export const useAppointmentStore = defineStore('appointment', () => {
     // Reemplaza updateStatus completo:
     async function updateStatus(id, status) {
         try {
-            await api.patch(`/admin/appointments/${id}/status`, { status })
+            await api.patch(`/manager/appointments/${id}/status`, { status })
             const idx = dayAppointments.value.findIndex(a => a.id === id)
             if (idx !== -1) {
                 const appt = dayAppointments.value[idx]
                 const prevStatus = appt.status
                 appt.status = status
+
+                // actualizar contadores del calendario mensual
+                const dateKey = appt.date
+                if (dateKey && calendar.value[dateKey]) {
+                    if (calendar.value[dateKey][prevStatus] !== undefined) calendar.value[dateKey][prevStatus]--
+                    if (calendar.value[dateKey][status] !== undefined) calendar.value[dateKey][status]++
+                }
 
                 if (status === 'cancelled') {
                     const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
@@ -137,20 +144,9 @@ export const useAppointmentStore = defineStore('appointment', () => {
                     const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
                     if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
                 }
-
-                // ✅ Notificación
-                const notifStore = useNotificationStore()
-                notifStore.add({
-                    type: status === 'cancelled' ? 'cancelled' : 'status_changed',
-                    clientName: appt.client.name,
-                    caseManagerName: appt.case_manager.name,
-                    date: appt.date,
-                    time: appt.start_time,
-                    status,
-                })
             }
             return { success: true }
-        } catch (e) {
+        } catch {
             return { success: false }
         }
     }

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Events\AppointmentCreatedEvent;
+use App\Events\AppointmentStatusUpdatedEvent;
 
 class ManagerAppointmentController extends Controller
 {
@@ -19,7 +20,7 @@ class ManagerAppointmentController extends Controller
         return auth()->user();
     }
 
-    /** GET /api/manager/clients */
+
     public function clients(): JsonResponse
     {
         $clients = $this->manager()->clients()
@@ -36,7 +37,7 @@ class ManagerAppointmentController extends Controller
         return response()->json(['clients' => $clients]);
     }
 
-    /** GET /api/manager/appointments/calendar */
+
     public function calendar(Request $request): JsonResponse
     {
         try {
@@ -83,7 +84,6 @@ class ManagerAppointmentController extends Controller
                 'month'    => (int) $month,
                 'year'     => (int) $year,
             ]);
-
         } catch (\Exception $e) {
             \Log::error('Calendar error:', [
                 'message' => $e->getMessage(),
@@ -94,7 +94,7 @@ class ManagerAppointmentController extends Controller
         }
     }
 
-    /** GET /api/manager/appointments/day */
+
     public function day(Request $request): JsonResponse
     {
         $date      = $request->get('date', now()->format('Y-m-d'));
@@ -143,7 +143,10 @@ class ManagerAppointmentController extends Controller
                 $slot           = sprintf('%02d:%02d', $h, $m);
                 $availableSlots[] = ['time' => $slot, 'available' => !in_array($slot, $occupiedSlots)];
                 $m += 30;
-                if ($m >= 60) { $m = 0; $h++; }
+                if ($m >= 60) {
+                    $m = 0;
+                    $h++;
+                }
             }
         }
 
@@ -165,7 +168,6 @@ class ManagerAppointmentController extends Controller
         ]);
     }
 
-    /** GET /api/manager/appointments/slots */
     public function slots(Request $request): JsonResponse
     {
         $request->validate([
@@ -213,13 +215,16 @@ class ManagerAppointmentController extends Controller
                 'day_off'   => $isDayOff,
             ];
             $m += 30;
-            if ($m >= 60) { $m = 0; $h++; }
+            if ($m >= 60) {
+                $m = 0;
+                $h++;
+            }
         }
 
         return response()->json(['slots' => $slots, 'is_working' => true]);
     }
 
-    /** POST /api/manager/appointments */
+
     public function store(Request $request): JsonResponse
     {
         $lang = $request->header('Accept-Language', 'en');
@@ -300,7 +305,7 @@ class ManagerAppointmentController extends Controller
         ], 201);
     }
 
-    /** PATCH /api/manager/appointments/{appointment}/status */
+
     public function updateStatus(Request $request, Appointment $appointment): JsonResponse
     {
         abort_if($appointment->case_manager_id !== $this->manager()->id, 403);
@@ -309,10 +314,17 @@ class ManagerAppointmentController extends Controller
             'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
         ]);
 
+        $previousStatus = $appointment->status;
+
         $appointment->update($validated);
+
+        if ($previousStatus !== $appointment->status) {
+            broadcast(new AppointmentStatusUpdatedEvent($appointment, $previousStatus, 'case_manager'))
+                ->toOthers();
+        }
+
         return response()->json(['message' => 'Status updated successfully.']);
     }
-
     /** PUT /api/manager/appointments/{appointment} */
     public function update(Request $request, Appointment $appointment): JsonResponse
     {

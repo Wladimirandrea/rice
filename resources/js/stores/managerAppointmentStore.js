@@ -2,6 +2,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/plugins/axios'
+import { useNotificationStore } from '@/stores/notificationStore'
+
 
 export const useManagerAppointmentStore = defineStore('managerAppointment', () => {
     const calendar = ref({})
@@ -23,11 +25,12 @@ export const useManagerAppointmentStore = defineStore('managerAppointment', () =
     const loadingSlots = ref(false)
 
     const myClients = ref([])
+    
 
     async function fetchClients() {
         try {
             const { data } = await api.get('/manager/clients')
-            myClients.value = data.data 
+            myClients.value = data.data
         } catch { myClients.value = [] }
     }
 
@@ -125,9 +128,26 @@ export const useManagerAppointmentStore = defineStore('managerAppointment', () =
         try {
             await api.patch(`/manager/appointments/${id}/status`, { status })
             const idx = dayAppointments.value.findIndex(a => a.id === id)
-            if (idx !== -1) dayAppointments.value[idx].status = status
+            if (idx !== -1) {
+                const appt = dayAppointments.value[idx]
+                const prevStatus = appt.status
+                appt.status = status
+
+                if (status === 'cancelled') {
+                    const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+                    if (slotIdx !== -1) availableSlots.value[slotIdx].available = true
+                }
+                if (prevStatus === 'cancelled' && status !== 'cancelled') {
+                    const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+                    if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
+                }
+
+                
+            }
             return { success: true }
-        } catch { return { success: false } }
+        } catch {
+            return { success: false }
+        }
     }
 
     async function updateAppointment(id, payload) {

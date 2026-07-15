@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Events\AppointmentCreatedEvent;
+use App\Events\AppointmentStatusUpdatedEvent;
 use App\Http\Controllers\Controller;
 use App\Mail\AppointmentCreatedMail;
 use App\Models\Appointment;
@@ -288,7 +289,13 @@ class AppointmentController extends Controller
             'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
         ]);
 
+        $previousStatus = $appointment->status;
+
         $appointment->update($validated);
+
+        if ($previousStatus !== $appointment->status) {
+            broadcast(new AppointmentStatusUpdatedEvent($appointment, $previousStatus, 'admin'));
+        }
 
         return response()->json(['message' => 'Status updated successfully.']);
     }

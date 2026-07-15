@@ -111,12 +111,17 @@ const initials = computed(() => {
                                 <div class="notif-content">
                                     <p class="notif-text">
                                         <strong>{{ n.clientName }}</strong>
-                                        <span v-if="n.type === 'created'"> — {{ $t('notifications.newAppointment') }}</span>
-                                        <span v-else-if="n.type === 'cancelled'"> — {{ $t('notifications.cancelled') }}</span>
-                                        <span v-else> — {{ $t('notifications.status') }}: <span class="notif-status"
-                                                :style="{ color: formatNotif(n).color }">{{ n.status }}</span></span>
+                                        <span v-if="n.type === 'created'"> — {{ $t('notifications.newAppointment')
+                                            }}</span>
+                                        <span v-else-if="n.type === 'cancelled'"> — {{ $t('notifications.cancelled')
+                                            }}</span>
+                                        <span v-else> — {{ $t('notifications.status') }}:
+                                            <span class="notif-status" :style="{ color: formatNotif(n).color }">{{
+                                                $t(`appointments.${n.status}`) }}</span>
+                                        </span>
                                     </p>
-                                    <p class="notif-meta">{{ n.date }} · {{ n.time }} · {{ n.caseManagerName }} · {{ timeAgo(n.createdAt) }}</p>
+                                    <p class="notif-meta">{{ n.date }} · {{ n.time }} · {{ n.caseManagerName }} · {{
+                                        timeAgo(n.createdAt) }}</p>
                                 </div>
                                 <div v-if="!n.read" class="notif-dot" />
                             </div>

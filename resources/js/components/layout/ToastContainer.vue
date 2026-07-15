@@ -37,7 +37,7 @@ function toastIcon(n) {
 function toastTitle(n) {
     if (n.type === 'created')   return t('notifications.newAppointment') + ' — ' + n.clientName
     if (n.type === 'cancelled') return n.clientName + ' — ' + t('notifications.cancelled')
-    return n.clientName + ' — ' + t('notifications.status') + ': ' + n.status
+    return n.clientName + ' — ' + t('notifications.status') + ': ' + t(`appointments.${n.status}`)
 }
 
 function dismiss(id) {

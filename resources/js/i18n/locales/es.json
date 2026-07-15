@@ -189,9 +189,11 @@
   "managerClients": {
     "title": "Clientes",
     "searchPlaceholder": "Buscar por nombre o correo...",
+    "noClients": "No se encontraron clientes",
+    "noClientsDesc": "Todavía no hay clientes asignados",
     "active": "Activo",
     "inactive": "Inactivo",
-    "totalAppts": "Citas totales",
+    "totalAppts": "Total de citas",
     "pending": "Pendiente",
     "since": "Desde",
     "changePassword": "Cambiar contraseña",

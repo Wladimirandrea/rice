@@ -60,7 +60,7 @@ export const useNotificationStore = defineStore('notifications', () => {
         save()
     }
 
-    // ── Handler compartido del evento ───────────────────────
+    // ── Handler: cita creada ─────────────────────────────────
     function handleAppointmentCreated(data) {
         const appt = data.appointment ?? data
         add({
@@ -69,7 +69,19 @@ export const useNotificationStore = defineStore('notifications', () => {
             caseManagerName: appt.case_manager?.name  ?? '—',
             date:            appt.date                ?? '—',
             time:            appt.start_time          ?? '—',
-            status:          appt.status              ?? 'pending',
+            status:          appt.status               ?? 'pending',
+        })
+    }
+
+    // ── Handler: status actualizado ──────────────────────────
+    function handleAppointmentStatusUpdated(data) {
+        add({
+            type:            data.status === 'cancelled' ? 'cancelled' : 'status_changed',
+            clientName:      data.client?.name        ?? '—',
+            caseManagerName: data.case_manager?.name  ?? '—',
+            date:            data.date                ?? '—',
+            time:            data.start_time          ?? '—',
+            status:          data.status               ?? 'pending',
         })
     }
 
@@ -86,22 +98,22 @@ export const useNotificationStore = defineStore('notifications', () => {
         if (!user) return
 
         if (user.role === 'admin') {
-            // Admin escucha el canal público con todas las citas
             echo
                 .channel('appointments')
                 .listen('.appointment.created', handleAppointmentCreated)
+                .listen('.appointment.status-updated', handleAppointmentStatusUpdated)
 
         } else if (user.role === 'case_manager') {
-            // Manager solo escucha sus propias citas
             echo
                 .private(`manager.${user.id}`)
                 .listen('.appointment.created', handleAppointmentCreated)
+                .listen('.appointment.status-updated', handleAppointmentStatusUpdated)
 
         } else if (user.role === 'client') {
-            // Cliente solo escucha sus propias citas
             echo
                 .private(`client.${user.id}`)
                 .listen('.appointment.created', handleAppointmentCreated)
+                .listen('.appointment.status-updated', handleAppointmentStatusUpdated)
         }
     }
 
