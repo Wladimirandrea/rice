@@ -125,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppointmentStore } from '@/stores/appointmentStore'
@@ -244,6 +244,10 @@ function onAppointmentUpdated(updated) {
     selectedAppt.value = { ...selectedAppt.value, ...updated }
     showDetail.value   = false
 }
+
+watch(date, (newDate) => {
+    if (newDate) store.fetchDay(newDate)
+})
 
 onMounted(() => store.fetchDay(date.value))
 </script>

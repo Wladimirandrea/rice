@@ -2,6 +2,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/plugins/axios'
+import echo from '@/plugins/echo'
+import { useAuthStore } from '@/stores/auth'
 
 
 export const useAppointmentStore = defineStore('appointment', () => {
@@ -23,7 +25,76 @@ export const useAppointmentStore = defineStore('appointment', () => {
     const selectedDate = ref(null)
     const loadingDay = ref(false)
     const selectedManager = ref(null)
-    const daySchedule = ref({ is_working: false, start_time: null, end_time: null }) // ← dentro del store
+    const daySchedule = ref({ is_working: false, start_time: null, end_time: null })
+
+    // ── Realtime ────────────────────────────────────────────
+    let subscribedRealtime = false
+
+    function subscribeRealtime() {
+        if (subscribedRealtime) return
+        subscribedRealtime = true
+
+        const auth = useAuthStore()
+        const user = auth.user
+        if (!user) return
+
+        echo
+            .channel('appointments')
+            .listen('.appointment.created', handleRealtimeCreated)
+            .listen('.appointment.status-updated', handleRealtimeStatusUpdate)
+    }
+
+    function handleRealtimeCreated(data) {
+        const appt = data.appointment ?? data
+        const dateKey = appt.date
+        if (dateKey) {
+            if (!calendar.value[dateKey]) {
+                calendar.value[dateKey] = { pending: 0, confirmed: 0, completed: 0, cancelled: 0, total: 0 }
+            }
+            if (calendar.value[dateKey][appt.status] !== undefined) calendar.value[dateKey][appt.status]++
+            calendar.value[dateKey].total++
+        }
+
+        if (selectedDate.value && dateKey === selectedDate.value) {
+            const exists = dayAppointments.value.some(a => a.id === appt.id)
+            if (!exists) {
+                dayAppointments.value.push(appt)
+                dayAppointments.value.sort((a, b) => a.start_time.localeCompare(b.start_time))
+                const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+                if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
+
+                const newCM = appt.case_manager
+                if (newCM) {
+                    const alreadyExists = dayCaseManagers.value.some(cm => cm.id === newCM.id)
+                    if (!alreadyExists) dayCaseManagers.value.push(newCM)
+                }
+            }
+        }
+    }
+
+    function handleRealtimeStatusUpdate(data) {
+        const dateKey = data.date
+        if (calendar.value[dateKey]) {
+            const prev = data.previous_status
+            if (calendar.value[dateKey][prev] !== undefined) calendar.value[dateKey][prev]--
+            if (calendar.value[dateKey][data.status] !== undefined) calendar.value[dateKey][data.status]++
+        }
+
+        const idx = dayAppointments.value.findIndex(a => a.id === data.id)
+        if (idx === -1) return
+        const appt = dayAppointments.value[idx]
+        const prevStatus = appt.status
+        appt.status = data.status
+
+        if (data.status === 'cancelled') {
+            const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+            if (slotIdx !== -1) availableSlots.value[slotIdx].available = true
+        }
+        if (prevStatus === 'cancelled' && data.status !== 'cancelled') {
+            const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+            if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
+        }
+    }
 
     // ── Calendar actions ──────────────────────────────────
     async function fetchCalendar(month = null, year = null) {
@@ -119,10 +190,9 @@ export const useAppointmentStore = defineStore('appointment', () => {
         }
     }
 
-    // Reemplaza updateStatus completo:
     async function updateStatus(id, status) {
         try {
-            await api.patch(`/manager/appointments/${id}/status`, { status })
+            await api.patch(`/admin/appointments/${id}/status`, { status })
             const idx = dayAppointments.value.findIndex(a => a.id === id)
             if (idx !== -1) {
                 const appt = dayAppointments.value[idx]
@@ -130,7 +200,7 @@ export const useAppointmentStore = defineStore('appointment', () => {
                 appt.status = status
 
                 // actualizar contadores del calendario mensual
-                const dateKey = appt.date
+                const dateKey = appt.date ?? selectedDate.value
                 if (dateKey && calendar.value[dateKey]) {
                     if (calendar.value[dateKey][prevStatus] !== undefined) calendar.value[dateKey][prevStatus]--
                     if (calendar.value[dateKey][status] !== undefined) calendar.value[dateKey][status]++
@@ -196,5 +266,6 @@ export const useAppointmentStore = defineStore('appointment', () => {
         loadingDay, selectedManager, daySchedule,
         fetchDay, createAppointment, updateStatus, updateAppointment,
         daysOff, availableSlots, formSlots, loadingSlots, fetchSlots,
+        subscribeRealtime,
     }
 })

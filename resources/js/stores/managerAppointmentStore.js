@@ -3,7 +3,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/plugins/axios'
 import { useNotificationStore } from '@/stores/notificationStore'
-
+import echo from '@/plugins/echo'
+import { useAuthStore } from '@/stores/auth'
 
 export const useManagerAppointmentStore = defineStore('managerAppointment', () => {
     const calendar = ref({})
@@ -25,7 +26,66 @@ export const useManagerAppointmentStore = defineStore('managerAppointment', () =
     const loadingSlots = ref(false)
 
     const myClients = ref([])
-    
+
+    let subscribedRealtime = false
+
+    function subscribeRealtime() {
+        if (subscribedRealtime) return
+        subscribedRealtime = true
+
+        const auth = useAuthStore()
+        const user = auth.user
+        if (!user) return
+
+        echo
+            .private(`manager.${user.id}`)
+            .listen('.appointment.created', handleRealtimeCreated)
+            .listen('.appointment.status-updated', handleRealtimeStatusUpdate)
+    }
+
+    function handleRealtimeCreated(data) {
+        const appt = data.appointment ?? data
+        const dateKey = appt.date
+        if (dateKey) {
+            if (!calendar.value[dateKey]) {
+                calendar.value[dateKey] = { pending: 0, confirmed: 0, completed: 0, cancelled: 0, total: 0 }
+            }
+            if (calendar.value[dateKey][appt.status] !== undefined) calendar.value[dateKey][appt.status]++
+            calendar.value[dateKey].total++
+        }
+
+        const idx = dayAppointments.value.findIndex(a => a.id === appt.id)
+        if (idx === -1 && dateKey && dayAppointments.value[0]?.date === dateKey) {
+            dayAppointments.value.push(appt)
+            dayAppointments.value.sort((a, b) => a.start_time.localeCompare(b.start_time))
+            const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+            if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
+        }
+    }
+
+    function handleRealtimeStatusUpdate(data) {
+        const dateKey = data.date
+        if (calendar.value[dateKey]) {
+            const prev = data.previous_status
+            if (calendar.value[dateKey][prev] !== undefined) calendar.value[dateKey][prev]--
+            if (calendar.value[dateKey][data.status] !== undefined) calendar.value[dateKey][data.status]++
+        }
+
+        const idx = dayAppointments.value.findIndex(a => a.id === data.id)
+        if (idx === -1) return
+        const appt = dayAppointments.value[idx]
+        const prevStatus = appt.status
+        appt.status = data.status
+
+        if (data.status === 'cancelled') {
+            const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+            if (slotIdx !== -1) availableSlots.value[slotIdx].available = true
+        }
+        if (prevStatus === 'cancelled' && data.status !== 'cancelled') {
+            const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
+            if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
+        }
+    }
 
     async function fetchClients() {
         try {
@@ -133,6 +193,13 @@ export const useManagerAppointmentStore = defineStore('managerAppointment', () =
                 const prevStatus = appt.status
                 appt.status = status
 
+                // actualizar contadores del calendario mensual
+                const dateKey = appt.date
+                if (dateKey && calendar.value[dateKey]) {
+                    if (calendar.value[dateKey][prevStatus] !== undefined) calendar.value[dateKey][prevStatus]--
+                    if (calendar.value[dateKey][status] !== undefined) calendar.value[dateKey][status]++
+                }
+
                 if (status === 'cancelled') {
                     const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
                     if (slotIdx !== -1) availableSlots.value[slotIdx].available = true
@@ -141,8 +208,6 @@ export const useManagerAppointmentStore = defineStore('managerAppointment', () =
                     const slotIdx = availableSlots.value.findIndex(s => s.time === appt.start_time)
                     if (slotIdx !== -1) availableSlots.value[slotIdx].available = false
                 }
-
-                
             }
             return { success: true }
         } catch {
@@ -172,5 +237,6 @@ export const useManagerAppointmentStore = defineStore('managerAppointment', () =
         formSlots, loadingSlots,
         fetchClients, fetchCalendar, prevMonth, nextMonth, setClientFilter,
         fetchDay, fetchSlots, createAppointment, updateStatus, updateAppointment,
+        subscribeRealtime,
     }
 })

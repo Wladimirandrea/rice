@@ -39,12 +39,7 @@ const routes = [
             { path: 'case-managers', name: 'admin.case-managers', component: () => import('@/views/admin/CaseManagersView.vue') },
             { path: 'schedule', name: 'admin.schedule', component: () => import('@/views/admin/ScheduleView.vue'), meta: { requiresAuth: true, role: 'admin' } },
             { path: 'appointments', name: 'admin.appointments', component: () => import('@/views/admin/AppointmentsView.vue'), meta: { requiresAuth: true, role: 'admin' } },
-            {
-                path: 'appointments',
-                name: 'admin.appointments',
-                component: () => import('@/views/admin/AppointmentsView.vue'),
-                meta: { requiresAuth: true, role: 'admin' },
-            },
+            
             {
                 path: 'appointments/:date',
                 name: 'admin.appointments.day',

@@ -203,7 +203,7 @@ function onApptUpdated(updated) {
     showDetail.value = false
 }
 
-onMounted(() => store.fetchDay(date.value))
+onMounted(() => { store.fetchDay(date.value); store.subscribeRealtime() })
 </script>
 
 <style scoped>

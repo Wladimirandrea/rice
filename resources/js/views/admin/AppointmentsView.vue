@@ -33,7 +33,7 @@ function onDayClick({ day, month, year }) {
     router.push({ name: 'admin.appointments.day', params: { date } })
 }
 
-onMounted(() => store.fetchCalendar())
+onMounted(() => { store.fetchCalendar(); store.subscribeRealtime() })
 </script>
 
 <style scoped>

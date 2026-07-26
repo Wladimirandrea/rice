@@ -237,7 +237,7 @@ class AppointmentController extends Controller
         $appointment->load('client:id,name,email,profile_image', 'caseManager:id,name,email,profile_image');
 
         //enviar evento
-        broadcast(new AppointmentCreatedEvent($appointment));
+        broadcast(new AppointmentCreatedEvent($appointment))->toOthers();
 
         // Enviar emails
         $locale = $isEs ? 'es' : 'en';

@@ -43,6 +43,14 @@ function timeAgo(isoDate) {
     return `${Math.floor(diff / 86400)}${t('notifications.daysAgo')}`
 }
 
+function goToNotif(n) {
+    notifOpen.value = false
+    const role = authStore.user?.role
+    const routeName = role === 'admin' ? 'admin.appointments.day' : 'manager.appointments.day'
+    router.push({ name: routeName, params: { date: n.date } })
+}
+
+
 async function logout() {
     profileOpen.value = false
     await authStore.logout()
@@ -106,15 +114,15 @@ const initials = computed(() => {
                                 <span>{{ $t('notifications.empty') }}</span>
                             </div>
                             <div v-for="n in notifStore.notifications" :key="n.id" class="notif-item"
-                                :class="{ 'notif-item--unread': !n.read }">
+                                :class="{ 'notif-item--unread': !n.read }" @click="goToNotif(n)">
                                 <div class="notif-icon">{{ formatNotif(n).icon }}</div>
                                 <div class="notif-content">
                                     <p class="notif-text">
                                         <strong>{{ n.clientName }}</strong>
                                         <span v-if="n.type === 'created'"> — {{ $t('notifications.newAppointment')
-                                            }}</span>
+                                        }}</span>
                                         <span v-else-if="n.type === 'cancelled'"> — {{ $t('notifications.cancelled')
-                                            }}</span>
+                                        }}</span>
                                         <span v-else> — {{ $t('notifications.status') }}:
                                             <span class="notif-status" :style="{ color: formatNotif(n).color }">{{
                                                 $t(`appointments.${n.status}`) }}</span>
@@ -404,6 +412,7 @@ const initials = computed(() => {
     border-bottom: 1px solid #1a2235;
     transition: background 0.2s;
     position: relative;
+    cursor: pointer; 
 }
 
 .notif-item:last-child {
